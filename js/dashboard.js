@@ -6,6 +6,7 @@
 // 全局变量
 let currentPage = 'my-computing';
 let charts = {};
+let quotaSubPage = 'apply'; // 'apply' | 'approve' | 'batch'
 
 // ==================== 初始化 ====================
 
@@ -67,9 +68,7 @@ function updateNavActive() {
 function updatePageTitle() {
     const titles = {
         'my-computing': '我的算力',
-        'quota-manage': '额度申请',
-        'quota-requests': '配额审批',
-        'user-management': '用户额度',
+        'quota': '额度管理',
         'dashboard': '运营看板',
         'projects': '项目管理',
         'models': '模型管理',
@@ -90,14 +89,8 @@ function renderCurrentPage() {
         case 'my-computing':
             renderMyComputing(mainContent);
             break;
-        case 'quota-manage':
-            renderQuotaManage(mainContent);
-            break;
-        case 'quota-requests':
-            renderQuotaRequests(mainContent);
-            break;
-        case 'user-management':
-            renderUserManagement(mainContent);
+        case 'quota':
+            renderQuota(mainContent);
             break;
         case 'dashboard':
             renderDashboard(mainContent);
@@ -186,26 +179,6 @@ function renderMyComputing(container) {
             </div>
         </div>
 
-        <!-- 图表区域 -->
-        <div class="grid grid-cols-2 gap-6 mb-6">
-            <div class="card">
-                <div class="card-header">Token使用趋势</div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="usageTrendChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">模型使用分布</div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="modelDistChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- 令牌管理表格 -->
         <div class="card">
             <div class="card-header flex items-center justify-between">
@@ -222,10 +195,13 @@ function renderMyComputing(container) {
                     <thead>
                         <tr>
                             <th>令牌名称</th>
-                            <th>令牌ID</th>
+                            <th>状态</th>
+                            <th>已用额度</th>
+                            <th>剩余额度</th>
+                            <th>秘钥</th>
+                            <th>可用模型</th>
                             <th>创建时间</th>
                             <th>过期时间</th>
-                            <th>状态</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -237,28 +213,35 @@ function renderMyComputing(container) {
         </div>
     `;
 
-    // 初始化图表
-    initUsageTrendChart();
-    initModelDistChart();
 }
 
 function renderTokenTable() {
     return tokens.map(token => {
         const status = getTokenStatus(token);
-        const isRevoked = token.status === 'revoked';
+        const remaining = token.quota - token.used;
+        const isDisabled = token.status === 'revoked';
         return `
-            <tr class="${isRevoked ? 'revoked' : ''}">
+            <tr class="${isDisabled ? 'opacity-50' : ''}">
                 <td class="font-medium">${token.name}</td>
-                <td class="font-mono text-sm">${token.key}</td>
-                <td>${formatDate(token.createdAt)}</td>
-                <td>${formatDate(token.expiresAt)}</td>
                 <td>
                     <span class="badge ${status.class}">${status.text}</span>
                 </td>
+                <td>${formatNumber(token.used)}</td>
+                <td>${formatNumber(remaining)}</td>
                 <td>
                     <div class="flex items-center gap-2">
-                        <button class="btn btn-sm btn-secondary" onclick="viewToken('${token.id}')">查看</button>
-                        ${!isRevoked ? `<button class="btn btn-sm btn-danger" onclick="revokeToken('${token.id}')">吊销</button>` : ''}
+                        <span class="font-mono text-sm text-slate-500">${token.key.substring(0, 12)}...</span>
+                        <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('${token.key}', '秘钥')">复制</button>
+                    </div>
+                </td>
+                <td>${token.availableModels}</td>
+                <td>${formatDate(token.createdAt)}</td>
+                <td>${formatDate(token.expiresAt)}</td>
+                <td>
+                    <div class="flex items-center gap-2">
+                        <button class="btn btn-sm btn-ghost" onclick="editToken('${token.id}')">编辑</button>
+                        <button class="btn btn-sm btn-ghost" onclick="toggleTokenStatus('${token.id}')">${isDisabled ? '启用' : '禁用'}</button>
+                        <button class="btn btn-sm btn-ghost text-error" onclick="deleteToken('${token.id}')">删除</button>
                     </div>
                 </td>
             </tr>
@@ -266,74 +249,47 @@ function renderTokenTable() {
     }).join('');
 }
 
-function initUsageTrendChart() {
-    const ctx = document.getElementById('usageTrendChart');
-    if (!ctx) return;
+// ==================== 额度管理页面（包含三个tab） ====================
 
-    charts.usageTrend = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: monthlyUsageData.labels,
-            datasets: [{
-                label: 'Token使用量',
-                data: monthlyUsageData.data,
-                borderColor: '#2563eb',
-                backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 4,
-                pointBackgroundColor: '#2563eb'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => formatNumber(value)
-                    }
-                }
-            }
-        }
-    });
+function renderQuota(container) {
+    container.innerHTML = `
+        <!-- Tab页签 -->
+        <div class="tabs mb-6">
+            <button class="tab ${quotaSubPage === 'apply' ? 'active' : ''}" data-tab="apply" onclick="switchQuotaTab('apply')">我的申请</button>
+            <button class="tab ${quotaSubPage === 'approve' ? 'active' : ''}" data-tab="approve" onclick="switchQuotaTab('approve')">配额审批</button>
+            <button class="tab ${quotaSubPage === 'batch' ? 'active' : ''}" data-tab="batch" onclick="switchQuotaTab('batch')">批量管理</button>
+        </div>
+
+        <!-- 内容区域 -->
+        <div id="quotaContent"></div>
+    `;
+
+    // 渲染当前tab的内容
+    renderQuotaContent();
 }
 
-function initModelDistChart() {
-    const ctx = document.getElementById('modelDistChart');
-    if (!ctx) return;
+function switchQuotaTab(tab) {
+    quotaSubPage = tab;
+    renderQuotaContent();
 
-    const colors = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
+    // 更新tab激活状态
+    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.tabs .tab[data-tab="${tab}"]`).classList.add('active');
+}
 
-    charts.modelDist = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: modelDistribution.map(m => m.model),
-            datasets: [{
-                data: modelDistribution.map(m => m.usage),
-                backgroundColor: colors,
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '65%',
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 15
-                    }
-                }
-            }
-        }
-    });
+function renderQuotaContent() {
+    const content = document.getElementById('quotaContent');
+    switch(quotaSubPage) {
+        case 'apply':
+            renderQuotaManage(content);
+            break;
+        case 'approve':
+            renderQuotaRequests(content);
+            break;
+        case 'batch':
+            renderUserManagement(content);
+            break;
+    }
 }
 
 // ==================== 额度申请页面 ====================
@@ -511,9 +467,10 @@ function renderUserManagement(container) {
                         <tr>
                             <th>用户姓名</th>
                             <th>所属部门</th>
-                            <th>当前额度</th>
-                            <th>已使用</th>
+                            <th>所属项目</th>
                             <th>剩余额度</th>
+                            <th>已用额度</th>
+                            <th>总额度</th>
                             <th>使用率</th>
                             <th>状态</th>
                             <th>操作</th>
@@ -528,9 +485,10 @@ function renderUserManagement(container) {
                                 <tr>
                                     <td class="font-medium">${user.name}</td>
                                     <td>${user.department}</td>
-                                    <td>${formatNumber(user.quota)}</td>
-                                    <td>${formatNumber(user.used)}</td>
+                                    <td>${user.project || '-'}</td>
                                     <td>${formatNumber(remaining)}</td>
+                                    <td>${formatNumber(user.used)}</td>
+                                    <td>${formatNumber(user.quota)}</td>
                                     <td>
                                         <div class="flex items-center gap-2">
                                             <div class="progress-bar w-20">
@@ -566,6 +524,11 @@ let dashboardTab = 'person';
 let dashboardView = 'overview'; // 'overview' 或 'detail'
 let dashboardTimeRange = '30';
 let customDateRange = { start: '', end: '' };
+let detailPage = 1;
+let detailPageSize = 10;
+let logsPage = 1;
+let logsPageSize = 10;
+let modelVendorFilter = '';
 
 function renderDashboard(container) {
     if (dashboardView === 'detail') {
@@ -782,18 +745,18 @@ function renderModelDashboard() {
     return `
         <div class="grid grid-cols-2 gap-6 mb-6">
             <div class="card">
-                <div class="card-header">模型请求次数统计</div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="modelReqChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
                 <div class="card-header">模型Token消耗统计</div>
                 <div class="card-body">
                     <div class="chart-container">
                         <canvas id="modelUsageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">模型请求次数统计</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="modelReqChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -888,21 +851,56 @@ function renderProjectDashboard() {
 
 // 项目算力使用明细
 function renderDashboardDetail() {
+    // 获取筛选后的数据（当前默认显示全部用户）
+    const currentData = userUsage;
+    const totalItems = currentData.length;
+    const totalPages = Math.ceil(totalItems / detailPageSize);
+    const startIndex = (detailPage - 1) * detailPageSize;
+    const endIndex = Math.min(startIndex + detailPageSize, totalItems);
+    const paginatedData = currentData.slice(startIndex, endIndex);
+
     return `
-        <!-- 看板切换 -->
-        <div class="tabs mb-6">
-            <button class="tab ${dashboardView === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchDashboardTab('overview')">算力使用全景看板</button>
-            <button class="tab ${dashboardView === 'detail' ? 'active' : ''}" data-tab="detail" onclick="switchDashboardTab('detail')">用户算力使用明细</button>
+        <!-- 标题和筛选器 -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="tabs">
+                <button class="tab ${dashboardView === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchDashboardTab('overview')">算力使用全景看板</button>
+                <button class="tab ${dashboardView === 'detail' ? 'active' : ''}" data-tab="detail" onclick="switchDashboardTab('detail')">项目算力使用明细</button>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- 项目筛选器 -->
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-slate-500">项目:</span>
+                    <select class="filter-select text-sm" id="detailProjectFilter" onchange="filterDetailByProject(this.value)">
+                        <option value="">全部项目</option>
+                        ${projectUsage.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+                    </select>
+                </div>
+                <!-- 时间筛选器 -->
+                <div class="flex items-center gap-1">
+                    <input type="date" class="input text-sm py-1" id="detailStartDate" value="${customDateRange.start || ''}" onchange="updateDetailDateRange()">
+                    <span class="text-slate-400">至</span>
+                    <input type="date" class="input text-sm py-1" id="detailEndDate" value="${customDateRange.end || ''}" onchange="updateDetailDateRange()">
+                </div>
+                <div class="flex items-center gap-1">
+                    <button class="btn btn-sm ${dashboardTimeRange === '7' ? 'btn-primary' : 'btn-secondary'}" onclick="setDetailQuickRange(7)">近7天</button>
+                    <button class="btn btn-sm ${dashboardTimeRange === '30' ? 'btn-primary' : 'btn-secondary'}" onclick="setDetailQuickRange(30)">近30天</button>
+                    <button class="btn btn-sm ${dashboardTimeRange === '90' ? 'btn-primary' : 'btn-secondary'}" onclick="setDetailQuickRange(90)">近90天</button>
+                </div>
+            </div>
         </div>
 
         <!-- 用户使用明细 -->
         <div class="card">
             <div class="card-header flex justify-between items-center">
-                <span>用户算力使用明细</span>
-                <select class="filter-select text-sm">
-                    <option value="">全部用户</option>
-                    ${userUsage.map(u => `<option value="${u.name}">${u.name}</option>`).join('')}
-                </select>
+                <div class="flex items-center gap-2">
+                    <span>用户算力使用明细</span>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="exportUserUsageDetail()">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    导出
+                </button>
             </div>
             <div class="table-container">
                 <table class="table">
@@ -910,30 +908,155 @@ function renderDashboardDetail() {
                         <tr>
                             <th>排名</th>
                             <th>姓名</th>
+                            <th>所属部门</th>
+                            <th>所属项目</th>
                             <th>Token使用量</th>
                             <th>占比</th>
                             <th>环比变化</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        ${userUsage.map(u => `
-                            <tr>
-                                <td>${u.rank}</td>
-                                <td class="font-medium">${u.name}</td>
-                                <td>${formatNumber(u.usage)}</td>
-                                <td>${u.percentage}%</td>
-                                <td>
-                                    <span class="${u.change >= 0 ? 'text-success' : 'text-error'}">
-                                        ${u.change >= 0 ? '+' : ''}${u.change}%
-                                    </span>
-                                </td>
-                            </tr>
-                        `).join('')}
+                    <tbody id="detailTableBody">
+                        ${renderDetailTable(paginatedData, startIndex + 1)}
                     </tbody>
                 </table>
             </div>
+            <!-- 分页 -->
+            <div class="card-body flex items-center justify-between">
+                <div class="text-sm text-slate-500">
+                    显示 ${startIndex + 1}-${endIndex} 条，共 ${totalItems} 条
+                </div>
+                <div class="flex items-center gap-1">
+                    <button class="btn btn-sm btn-secondary ${detailPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}"
+                        onclick="changeDetailPage(${detailPage - 1})" ${detailPage === 1 ? 'disabled' : ''}>
+                        上一页
+                    </button>
+                    ${renderDetailPagination(totalPages)}
+                    <button class="btn btn-sm btn-secondary ${detailPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}"
+                        onclick="changeDetailPage(${detailPage + 1})" ${detailPage === totalPages ? 'disabled' : ''}>
+                        下一页
+                    </button>
+                </div>
+            </div>
         </div>
     `;
+}
+
+function renderDetailPagination(totalPages) {
+    let pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+    }
+    return pages.map(page => `
+        <button class="btn btn-sm ${detailPage === page ? 'btn-primary' : 'btn-secondary'}" onclick="changeDetailPage(${page})">
+            ${page}
+        </button>
+    `).join('');
+}
+
+function changeDetailPage(page) {
+    const totalPages = Math.ceil(userUsage.length / detailPageSize);
+    if (page < 1 || page > totalPages) return;
+    detailPage = page;
+    renderCurrentPage();
+}
+
+function renderDetailTable(data, startIndex = 1) {
+    // 判断是用户数据还是项目数据
+    const isUserData = data[0] && 'department' in data[0];
+    return data.map((item, i) => `
+        <tr>
+            <td>${item.rank || startIndex + i}</td>
+            <td class="font-medium">${item.name}</td>
+            <td>${isUserData ? item.department : '-'}</td>
+            <td>${isUserData ? item.project : item.name}</td>
+            <td>${formatNumber(item.usage)}</td>
+            <td>${item.percentage}%</td>
+            <td>
+                <span class="${item.change >= 0 ? 'text-success' : 'text-error'}">
+                    ${item.change >= 0 ? '+' : ''}${item.change}%
+                </span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function filterDetailByProject(projectName) {
+    detailPage = 1; // 重置到第一页
+    renderCurrentPage();
+}
+
+function updateDetailDateRange() {
+    const startDate = document.getElementById('detailStartDate').value;
+    const endDate = document.getElementById('detailEndDate').value;
+
+    if (startDate && endDate) {
+        customDateRange = { start: startDate, end: endDate };
+        dashboardTimeRange = 'custom';
+        detailPage = 1; // 重置到第一页
+        showToast('info', '时间范围已切换', `${startDate} 至 ${endDate}`);
+        renderCurrentPage();
+    }
+}
+
+function setDetailQuickRange(days) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - days);
+    customDateRange = {
+        start: start.toISOString().split('T')[0],
+        end: end.toISOString().split('T')[0]
+    };
+    dashboardTimeRange = String(days);
+    detailPage = 1; // 重置到第一页
+    showToast('info', '时间范围已切换', `近${days}天`);
+    renderCurrentPage();
+}
+
+// 导出用户算力使用明细
+function exportUserUsageDetail() {
+    // 获取当前筛选后的数据（所有数据，非分页）
+    const data = userUsage;
+
+    // 表头
+    const headers = ['排名', '姓名', '所属部门', '所属项目', 'Token使用量', '占比', '环比变化'];
+
+    // 数据行
+    const rows = data.map(item => [
+        item.rank || '-',
+        item.name,
+        item.department,
+        item.project,
+        item.usage,
+        item.percentage + '%',
+        (item.change >= 0 ? '+' : '') + item.change + '%'
+    ]);
+
+    // 合并所有数据
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // 添加BOM以支持中文
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    // 创建下载链接
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    // 设置文件名（包含日期）
+    const date = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `用户算力使用明细_${date}.csv`);
+    link.style.visibility = 'hidden';
+
+    // 触发下载
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast('success', '导出成功', `已导出 ${data.length} 条数据`);
 }
 
 function showProjectDetail(projectName) {
@@ -1268,61 +1391,65 @@ function removeToast(id) {
 
 // ==================== 模型管理页面 ====================
 
+// 获取模型厂商列表
+function getVendorList() {
+    const vendors = [...new Set(MODELS.map(m => m.vendor))];
+    return vendors;
+}
+
 function renderModelManagement(container) {
+    const vendors = getVendorList();
+    const categoryFilter = document.getElementById('modelCategoryFilter')?.value || '';
+
+    // 筛选模型
+    let filteredModels = MODELS;
+    if (modelVendorFilter) {
+        filteredModels = filteredModels.filter(m => m.vendor === modelVendorFilter);
+    }
+    if (categoryFilter) {
+        filteredModels = filteredModels.filter(m => m.category === categoryFilter);
+    }
+
     container.innerHTML = `
         <div class="card">
+            <div class="card-body pb-0">
+                <!-- 厂商筛选按钮组 -->
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-sm text-slate-500">厂商:</span>
+                    <div class="flex items-center gap-1">
+                        <button class="btn btn-sm ${modelVendorFilter === '' ? 'btn-primary' : 'btn-secondary'}"
+                            onclick="setModelVendorFilter('')">全部</button>
+                        ${vendors.map(v => `
+                            <button class="btn btn-sm ${modelVendorFilter === v ? 'btn-primary' : 'btn-secondary'}"
+                                onclick="setModelVendorFilter('${v}')">${v}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
             <div class="card-header flex items-center justify-between">
                 <span>可用模型清单</span>
-                <div class="flex items-center gap-2">
-                    <select class="filter-select text-sm">
-                        <option value="">全部类型</option>
-                        <option value="大语言模型">大语言模型</option>
-                        <option value="图像生成">图像生成</option>
-                        <option value="语音识别">语音识别</option>
-                    </select>
-                </div>
+                <select class="filter-select text-sm" id="modelCategoryFilter" onchange="filterModels()">
+                    <option value="">全部类型</option>
+                    <option value="大语言模型" ${categoryFilter === '大语言模型' ? 'selected' : ''}>大语言模型</option>
+                    <option value="图像生成" ${categoryFilter === '图像生成' ? 'selected' : ''}>图像生成</option>
+                    <option value="语音识别" ${categoryFilter === '语音识别' ? 'selected' : ''}>语音识别</option>
+                </select>
             </div>
             <div class="table-container">
                 <table class="table">
                     <thead>
                         <tr>
                             <th>模型名称</th>
-                            <th>类型</th>
+                            <th>模型类型</th>
+                            <th>模型厂商</th>
                             <th>API地址</th>
                             <th>API密钥</th>
                             <th>状态</th>
                             <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        ${MODELS.map(model => `
-                            <tr>
-                                <td class="font-medium">${model.name}</td>
-                                <td><span class="badge bg-slate-100 text-slate-600">${model.category}</span></td>
-                                <td class="font-mono text-sm text-slate-500">${model.apiUrl}</td>
-                                <td class="font-mono text-sm text-slate-500">${model.apiKey}</td>
-                                <td>
-                                    <span class="badge ${model.status === 'active' ? 'badge-success' : 'badge-error'}">
-                                        ${model.status === 'active' ? '可用' : '不可用'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="flex items-center gap-1">
-                                        <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('${model.apiUrl}', 'API地址')" title="复制API地址">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                            </svg>
-                                        </button>
-                                        <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('${model.apiKey}', 'API密钥')" title="复制API密钥">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                                            </svg>
-                                        </button>
-                                        <button class="btn btn-sm btn-secondary" onclick="showModelTestModal('${model.id}')">测试</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `).join('')}
+                    <tbody id="modelTableBody">
+                        ${renderModelTable(filteredModels)}
                     </tbody>
                 </table>
             </div>
@@ -1330,9 +1457,57 @@ function renderModelManagement(container) {
     `;
 }
 
+function renderModelTable(models) {
+    return models.map(model => `
+        <tr>
+            <td class="font-medium">${model.name}</td>
+            <td><span class="badge bg-slate-100 text-slate-600">${model.category}</span></td>
+            <td>${model.vendor}</td>
+            <td class="font-mono text-sm text-slate-500">${model.apiUrl}</td>
+            <td class="font-mono text-sm text-slate-500">${model.apiKey}</td>
+            <td>
+                <span class="badge ${model.status === 'active' ? 'badge-success' : 'badge-error'}">
+                    ${model.status === 'active' ? '可用' : '不可用'}
+                </span>
+            </td>
+            <td>
+                <div class="flex items-center gap-1">
+                    <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('${model.apiUrl}', 'API地址')" title="复制API地址">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                    <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('${model.apiKey}', 'API密钥')" title="复制API密钥">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                        </svg>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="showModelTestModal('${model.id}')">测试</button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function filterModels() {
+    renderCurrentPage();
+}
+
+function setModelVendorFilter(vendor) {
+    modelVendorFilter = vendor;
+    renderCurrentPage();
+}
+
 // ==================== 使用日志页面 ====================
 
 function renderUseLogs(container) {
+    // 分页计算
+    const totalItems = useLogs.length;
+    const totalPages = Math.ceil(totalItems / logsPageSize);
+    const startIndex = (logsPage - 1) * logsPageSize;
+    const endIndex = Math.min(startIndex + logsPageSize, totalItems);
+    const paginatedLogs = useLogs.slice(startIndex, endIndex);
+
     container.innerHTML = `
         <div class="card">
             <div class="card-header flex items-center justify-between">
@@ -1354,33 +1529,66 @@ function renderUseLogs(container) {
                     <thead>
                         <tr>
                             <th>时间</th>
+                            <th>令牌</th>
+                            <th>所属项目</th>
                             <th>用户</th>
                             <th>模型</th>
-                            <th>操作</th>
-                            <th>消耗Token</th>
-                            <th>状态</th>
+                            <th>用时</th>
+                            <th>消耗TOKEN</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${useLogs.map(log => `
+                        ${paginatedLogs.map(log => `
                             <tr>
                                 <td class="text-sm text-slate-500">${log.time}</td>
+                                <td>${log.id}</td>
+                                <td>${log.project}</td>
                                 <td>${log.user}</td>
                                 <td><span class="badge bg-slate-100 text-slate-600">${log.model}</span></td>
-                                <td>${log.action}</td>
+                                <td>${log.duration}</td>
                                 <td>${formatNumber(log.tokens)}</td>
-                                <td>
-                                    <span class="badge ${log.status === 'success' ? 'badge-success' : 'badge-error'}">
-                                        ${log.status === 'success' ? '成功' : '失败'}
-                                    </span>
-                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>
+            <div class="card-body flex items-center justify-between">
+                <div class="text-sm text-slate-500">
+                    显示 ${startIndex + 1}-${endIndex} 条，共 ${totalItems} 条
+                </div>
+                <div class="flex items-center gap-1">
+                    <button class="btn btn-sm btn-secondary ${logsPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}"
+                        onclick="changeLogsPage(${logsPage - 1})" ${logsPage === 1 ? 'disabled' : ''}>
+                        上一页
+                    </button>
+                    ${renderLogsPagination(totalPages)}
+                    <button class="btn btn-sm btn-secondary ${logsPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}"
+                        onclick="changeLogsPage(${logsPage + 1})" ${logsPage === totalPages ? 'disabled' : ''}>
+                        下一页
+                    </button>
+                </div>
+            </div>
         </div>
     `;
+}
+
+function renderLogsPagination(totalPages) {
+    let pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+    }
+    return pages.map(page => `
+        <button class="btn btn-sm ${logsPage === page ? 'btn-primary' : 'btn-secondary'}" onclick="changeLogsPage(${page})">
+            ${page}
+        </button>
+    `).join('');
+}
+
+function changeLogsPage(page) {
+    const totalPages = Math.ceil(useLogs.length / logsPageSize);
+    if (page < 1 || page > totalPages) return;
+    logsPage = page;
+    renderCurrentPage();
 }
 
 // 复制到剪贴板
@@ -1552,6 +1760,101 @@ function viewToken(id) {
             </div>
         </div>
     `);
+}
+
+function editToken(id) {
+    const token = tokens.find(t => t.id === id);
+    if (!token) return;
+
+    showModal('编辑令牌', `
+        <form id="editTokenForm">
+            <div class="form-group">
+                <label class="form-label">令牌名称</label>
+                <input type="text" class="form-input" id="editTokenName" value="${token.name}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">额度</label>
+                <input type="number" class="form-input" id="editTokenQuota" value="${token.quota}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">可用模型</label>
+                <input type="text" class="form-input" id="editTokenModels" value="${token.availableModels}" placeholder="多个模型用逗号分隔">
+            </div>
+        </form>
+    `, `
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmEditToken('${id}')">保存</button>
+    `);
+}
+
+function confirmEditToken(id) {
+    const token = tokens.find(t => t.id === id);
+    if (!token) return;
+
+    const name = document.getElementById('editTokenName').value.trim();
+    const quota = parseInt(document.getElementById('editTokenQuota').value);
+    const models = document.getElementById('editTokenModels').value.trim();
+
+    if (!name || !quota) {
+        showToast('error', '保存失败', '请填写完整信息');
+        return;
+    }
+
+    token.name = name;
+    token.quota = quota;
+    token.availableModels = models;
+
+    closeModal();
+    renderCurrentPage();
+    showToast('success', '保存成功', '令牌信息已更新');
+}
+
+function toggleTokenStatus(id) {
+    const token = tokens.find(t => t.id === id);
+    if (!token) return;
+
+    const isDisabled = token.status === 'revoked';
+    const action = isDisabled ? '启用' : '禁用';
+
+    showModal(`确认${action}`, `
+        <p>确定要${action}令牌 "<strong>${token.name}</strong>" 吗？</p>
+    `, `
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmToggleTokenStatus('${id}')">确认${action}</button>
+    `);
+}
+
+function confirmToggleTokenStatus(id) {
+    const token = tokens.find(t => t.id === id);
+    if (!token) return;
+
+    token.status = token.status === 'revoked' ? 'active' : 'revoked';
+
+    closeModal();
+    renderCurrentPage();
+    showToast('success', '操作成功', `令牌已${token.status === 'revoked' ? '禁用' : '启用'}`);
+}
+
+function deleteToken(id) {
+    const token = tokens.find(t => t.id === id);
+    if (!token) return;
+
+    showModal('确认删除', `
+        <p>确定要删除令牌 "<strong>${token.name}</strong>" 吗？此操作不可恢复。</p>
+    `, `
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmDeleteToken('${id}')">确认删除</button>
+    `);
+}
+
+function confirmDeleteToken(id) {
+    const index = tokens.findIndex(t => t.id === id);
+    if (index !== -1) {
+        tokens.splice(index, 1);
+        closeModal();
+        renderCurrentPage();
+        showToast('success', '删除成功', '令牌已删除');
+    }
 }
 
 function revokeToken(id) {
@@ -1786,8 +2089,21 @@ function showApplyQuotaModal() {
     const content = `
         <form id="applyQuotaForm">
             <div class="form-group">
+                <label class="form-label">选择项目</label>
+                <select class="form-input" id="applyProject" onchange="onProjectChange()" required>
+                    <option value="">请选择项目</option>
+                    ${PROJECTS.filter(p => p.status === 'active').map(p => `
+                        <option value="${p.id}" data-leader="${p.leader}">${p.name}</option>
+                    `).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">项目负责人</label>
+                <input type="text" class="form-input" id="applyProjectLeader" placeholder="选择项目后自动带出" readonly>
+            </div>
+            <div class="form-group">
                 <label class="form-label">申请额度</label>
-                <input type="number" class="form-input" id="applyAmount" placeholder="请输入申请额度" required>
+                <input type="number" class="form-input" id="applyAmount" placeholder="请输入Token额度">
             </div>
             <div class="form-group">
                 <label class="form-label">申请原因</label>
@@ -1804,11 +2120,27 @@ function showApplyQuotaModal() {
     showModal('申请额度', content, footer);
 }
 
+function onProjectChange() {
+    const projectSelect = document.getElementById('applyProject');
+    const leaderInput = document.getElementById('applyProjectLeader');
+    const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+
+    if (selectedOption && selectedOption.value) {
+        leaderInput.value = selectedOption.dataset.leader || '';
+    } else {
+        leaderInput.value = '';
+    }
+}
+
 function submitQuotaApply() {
+    const projectSelect = document.getElementById('applyProject');
+    const projectId = projectSelect.value;
+    const projectName = projectSelect.options[projectSelect.selectedIndex].text;
+    const leader = document.getElementById('applyProjectLeader').value;
     const amount = parseInt(document.getElementById('applyAmount').value);
     const reason = document.getElementById('applyReason').value.trim();
 
-    if (!amount || !reason) {
+    if (!projectId || !reason) {
         showToast('error', '提交失败', '请填写完整信息');
         return;
     }
@@ -1817,6 +2149,9 @@ function submitQuotaApply() {
         id: generateId('req'),
         userId: currentUser.id,
         userName: currentUser.name,
+        projectId: projectId,
+        projectName: projectName,
+        projectLeader: leader,
         amount: amount,
         reason: reason,
         status: 'pending',

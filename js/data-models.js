@@ -5,16 +5,16 @@
 
 // 模型列表
 const MODELS = [
-    { id: 'glm47', name: 'GLM4.7', category: '大语言模型', apiUrl: 'https://api.zhipuai.cn/v1/chat/completions', apiKey: 'zm-xxxxxxxxxxxxxxxx', status: 'active' },
-    { id: 'gpt4', name: 'GPT-4', category: '大语言模型', apiUrl: 'https://api.openai.com/v1/chat/completions', apiKey: 'sk-xxxxxxxxxxxxxxxx', status: 'active' },
-    { id: 'claude3', name: 'Claude3', category: '大语言模型', apiUrl: 'https://api.anthropic.com/v1/messages', apiKey: 'sk-ant-xxxxxxxxxxxxxxxx', status: 'active' },
-    { id: 'llama70b', name: 'LLaMA-70B', category: '大语言模型', apiUrl: 'https://api.llama.com/v1/chat/completions', apiKey: 'llama-xxxxxxxxxxxxxxxx', status: 'active' },
-    { id: 'qwenmax', name: 'Qwen-Max', category: '大语言模型', apiUrl: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation', apiKey: 'sk-xxxxxxxxxxxxxxxx', status: 'active' },
-    { id: 'baichuan2', name: 'Baichuan2', category: '大语言模型', apiUrl: 'https://api.baichuan-ai.com/v1/chat/completions', apiKey: 'xxxxxxxxxxxxxxxx', status: 'inactive' },
-    { id: 'internlm', name: 'InternLM', category: '大语言模型', apiUrl: 'https://api.sensel.com/v1/chat/completions', apiKey: 'intern-xxxxxxxxxxxxxxxx', status: 'active' },
-    { id: 'stablediffusion', name: 'StableDiffusion', category: '图像生成', apiUrl: 'https://api.stability.ai/v1/generation/text-to-image', apiKey: 'sk-xxxxxxxxxxxxxxxx', status: 'active' },
-    { id: 'whisper', name: 'Whisper', category: '语音识别', apiUrl: 'https://api.openai.com/v1/audio/transcriptions', apiKey: 'sk-xxxxxxxxxxxxxxxx', status: 'active' },
-    { id: 'mistral', name: 'Mistral', category: '大语言模型', apiUrl: 'https://api.mistral.ai/v1/chat/completions', apiKey: 'mistral-xxxxxxxxxxxxxxxx', status: 'active' }
+    { id: 'glm47', name: 'GLM4.7', category: '大语言模型', vendor: '智谱AI', apiUrl: 'https://api.zhipuai.cn/v1/chat/completions', apiKey: 'zm-xxxxxxxxxxxxxxxx', status: 'active' },
+    { id: 'gpt4', name: 'GPT-4', category: '大语言模型', vendor: 'OpenAI', apiUrl: 'https://api.openai.com/v1/chat/completions', apiKey: 'sk-xxxxxxxxxxxxxxxx', status: 'active' },
+    { id: 'claude3', name: 'Claude3', category: '大语言模型', vendor: 'Anthropic', apiUrl: 'https://api.anthropic.com/v1/messages', apiKey: 'sk-ant-xxxxxxxxxxxxxxxx', status: 'active' },
+    { id: 'llama70b', name: 'LLaMA-70B', category: '大语言模型', vendor: 'Meta', apiUrl: 'https://api.llama.com/v1/chat/completions', apiKey: 'llama-xxxxxxxxxxxxxxxx', status: 'active' },
+    { id: 'qwenmax', name: 'Qwen-Max', category: '大语言模型', vendor: '通义千问', apiUrl: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation', apiKey: 'sk-xxxxxxxxxxxxxxxx', status: 'active' },
+    { id: 'baichuan2', name: 'Baichuan2', category: '大语言模型', vendor: '百川智能', apiUrl: 'https://api.baichuan-ai.com/v1/chat/completions', apiKey: 'xxxxxxxxxxxxxxxx', status: 'inactive' },
+    { id: 'internlm', name: 'InternLM', category: '大语言模型', vendor: '上海AI Lab', apiUrl: 'https://api.sensel.com/v1/chat/completions', apiKey: 'intern-xxxxxxxxxxxxxxxx', status: 'active' },
+    { id: 'stablediffusion', name: 'StableDiffusion', category: '图像生成', vendor: 'Stability AI', apiUrl: 'https://api.stability.ai/v1/generation/text-to-image', apiKey: 'sk-xxxxxxxxxxxxxxxx', status: 'active' },
+    { id: 'whisper', name: 'Whisper', category: '语音识别', vendor: 'OpenAI', apiUrl: 'https://api.openai.com/v1/audio/transcriptions', apiKey: 'sk-xxxxxxxxxxxxxxxx', status: 'active' },
+    { id: 'mistral', name: 'Mistral', category: '大语言模型', vendor: 'Mistral AI', apiUrl: 'https://api.mistral.ai/v1/chat/completions', apiKey: 'mistral-xxxxxxxxxxxxxxxx', status: 'active' }
 ];
 
 // 部门列表
@@ -33,13 +33,13 @@ const DEPARTMENTS = [
 
 // 项目列表
 const PROJECTS = [
-    { id: 'proj-001', name: 'AI4DESIGN', department: '芯片设计部', quota: 5000000, used: 1520000, members: 25, status: 'active', startDate: '2024-01-15' },
-    { id: 'proj-002', name: '智能验证引擎', department: '验证部', quota: 3000000, used: 890000, members: 15, status: 'active', startDate: '2024-02-01' },
-    { id: 'proj-003', name: '芯片自动化设计', department: '研发部', quota: 4000000, used: 2100000, members: 20, status: 'active', startDate: '2024-01-20' },
-    { id: 'proj-004', name: '封装AI优化', department: '封装部', quota: 2000000, used: 450000, members: 8, status: 'active', startDate: '2024-03-01' },
-    { id: 'proj-005', name: '智能测试系统', department: '测试部', quota: 1500000, used: 980000, members: 12, status: 'paused', startDate: '2024-02-15' },
-    { id: 'proj-006', name: '生产预测模型', department: '生产部', quota: 1000000, used: 320000, members: 6, status: 'active', startDate: '2024-04-01' },
-    { id: 'proj-007', name: '产品需求分析', department: '产品部', quota: 800000, used: 150000, members: 5, status: 'completed', startDate: '2024-03-10' }
+    { id: 'proj-001', name: 'AI4DESIGN', department: '芯片设计部', quota: 5000000, used: 1520000, members: 25, status: 'active', startDate: '2024-01-15', leader: '张伟' },
+    { id: 'proj-002', name: '智能验证引擎', department: '验证部', quota: 3000000, used: 890000, members: 15, status: 'active', startDate: '2024-02-01', leader: '李娜' },
+    { id: 'proj-003', name: '芯片自动化设计', department: '研发部', quota: 4000000, used: 2100000, members: 20, status: 'active', startDate: '2024-01-20', leader: '王强' },
+    { id: 'proj-004', name: '封装AI优化', department: '封装部', quota: 2000000, used: 450000, members: 8, status: 'active', startDate: '2024-03-01', leader: '刘洋' },
+    { id: 'proj-005', name: '智能测试系统', department: '测试部', quota: 1500000, used: 980000, members: 12, status: 'paused', startDate: '2024-02-15', leader: '陈静' },
+    { id: 'proj-006', name: '生产预测模型', department: '生产部', quota: 1000000, used: 320000, members: 6, status: 'active', startDate: '2024-04-01', leader: '赵磊' },
+    { id: 'proj-007', name: '产品需求分析', department: '产品部', quota: 800000, used: 150000, members: 5, status: 'completed', startDate: '2024-03-10', leader: '孙莉' }
 ];
 
 // 用户列表
@@ -71,10 +71,10 @@ let currentUser = {
 
 // 令牌列表
 let tokens = [
-    { id: 'tok-001', name: '开发环境API', key: 'sk-****...****a1b2', createdAt: '2024-06-01', expiresAt: '2024-12-31', status: 'active' },
-    { id: 'tok-002', name: '测试环境API', key: 'sk-****...****c3d4', createdAt: '2024-07-15', expiresAt: '2025-01-15', status: 'active' },
-    { id: 'tok-003', name: '生产环境主KEY', key: 'sk-****...****e5f6', createdAt: '2024-03-10', expiresAt: '2024-09-10', status: 'revoked' },
-    { id: 'tok-004', name: '临时测试KEY', key: 'sk-****...****g7h8', createdAt: '2024-08-01', expiresAt: '2024-08-31', status: 'expiring' }
+    { id: 'tok-001', name: '开发环境API', key: 'sk-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz', used: 325000, quota: 500000, availableModels: 'GPT-4,Claude3,GLM4.7', createdAt: '2024-06-01', expiresAt: '2024-12-31', status: 'active' },
+    { id: 'tok-002', name: '测试环境API', key: 'sk-xyz987wvu654tsr321qpo098nml765kji432gfe109hdc876b', used: 125000, quota: 300000, availableModels: 'GPT-4,GLM4.7', createdAt: '2024-07-15', expiresAt: '2025-01-15', status: 'active' },
+    { id: 'tok-003', name: '生产环境主KEY', key: 'sk-prod789xyz456abc123def012ghi678jkl901mno345pqr678', used: 450000, quota: 450000, availableModels: '全部模型', createdAt: '2024-03-10', expiresAt: '2024-09-10', status: 'revoked' },
+    { id: 'tok-004', name: '临时测试KEY', key: 'sk-test123abc456def789ghi012jkl345mno678pqr901stu234vwx', used: 50000, quota: 100000, availableModels: 'GLM4.7,Qwen-Max', createdAt: '2024-08-01', expiresAt: '2024-08-31', status: 'expiring' }
 ];
 
 // 额度申请记录
@@ -216,16 +216,16 @@ const projectHistory = [
 
 // 使用日志
 const useLogs = [
-    { id: 'log-001', time: '2025-02-27 14:30:25', user: '张伟', model: 'GLM4.7', action: '文本生成', tokens: 12500, status: 'success' },
-    { id: 'log-002', time: '2025-02-27 14:25:10', user: '李娜', model: 'GPT-4', action: '代码生成', tokens: 8200, status: 'success' },
-    { id: 'log-003', time: '2025-02-27 14:20:55', user: '王强', model: 'Claude3', action: '问答', tokens: 3500, status: 'success' },
-    { id: 'log-004', time: '2025-02-27 14:15:30', user: '周涛', model: 'StableDiffusion', action: '图像生成', tokens: 15000, status: 'success' },
-    { id: 'log-005', time: '2025-02-27 14:10:18', user: '郑浩', model: 'GLM4.7', action: '文本生成', tokens: 6800, status: 'success' },
-    { id: 'log-006', time: '2025-02-27 14:05:42', user: '赵磊', model: 'Whisper', action: '语音转文字', tokens: 1200, status: 'success' },
-    { id: 'log-007', time: '2025-02-27 14:00:15', user: '刘洋', model: 'LLaMA-70B', action: '文本生成', tokens: 9200, status: 'success' },
-    { id: 'log-008', time: '2025-02-27 13:55:30', user: '吴敏', model: 'GPT-4', action: '代码审查', tokens: 15000, status: 'success' },
-    { id: 'log-009', time: '2025-02-27 13:50:22', user: '陈静', model: 'Qwen-Max', action: '问答', tokens: 4200, status: 'failed' },
-    { id: 'log-010', time: '2025-02-27 13:45:08', user: '孙莉', model: 'GLM4.7', action: '文本生成', tokens: 7800, status: 'success' }
+    { id: 'log-001', time: '2025-02-27 14:30:25', user: '张伟', project: 'AI4DESIGN', model: 'GLM4.7', duration: '2.5s', tokens: 12500, status: 'success' },
+    { id: 'log-002', time: '2025-02-27 14:25:10', user: '李娜', project: '智能验证引擎', model: 'GPT-4', duration: '1.8s', tokens: 8200, status: 'success' },
+    { id: 'log-003', time: '2025-02-27 14:20:55', user: '王强', project: '芯片自动化设计', model: 'Claude3', duration: '3.2s', tokens: 3500, status: 'success' },
+    { id: 'log-004', time: '2025-02-27 14:15:30', user: '周涛', project: '封装AI优化', model: 'StableDiffusion', duration: '8.5s', tokens: 15000, status: 'success' },
+    { id: 'log-005', time: '2025-02-27 14:10:18', user: '郑浩', project: 'AI4DESIGN', model: 'GLM4.7', duration: '1.2s', tokens: 6800, status: 'success' },
+    { id: 'log-006', time: '2025-02-27 14:05:42', user: '赵磊', project: '生产预测模型', model: 'Whisper', duration: '5.0s', tokens: 1200, status: 'success' },
+    { id: 'log-007', time: '2025-02-27 14:00:15', user: '刘洋', project: '智能测试系统', model: 'LLaMA-70B', duration: '4.1s', tokens: 9200, status: 'success' },
+    { id: 'log-008', time: '2025-02-27 13:55:30', user: '吴敏', project: '芯片自动化设计', model: 'GPT-4', duration: '2.9s', tokens: 15000, status: 'success' },
+    { id: 'log-009', time: '2025-02-27 13:50:22', user: '陈静', project: '产品需求分析', model: 'Qwen-Max', duration: '1.5s', tokens: 4200, status: 'failed' },
+    { id: 'log-010', time: '2025-02-27 13:45:08', user: '孙莉', project: 'AI4DESIGN', model: 'GLM4.7', duration: '2.0s', tokens: 7800, status: 'success' }
 ];
 
 // ==================== 工具函数 ====================
