@@ -318,25 +318,36 @@ function renderQuotaManage(container) {
                             <th>状态</th>
                             <th>处理时间</th>
                             <th>处理备注</th>
+                            <th>审批链接</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${myRequests.length > 0 ? myRequests.map(req => `
+                        ${myRequests.length > 0 ? myRequests.map(req => {
+                            const approvalLink = `https://ai-management.example.com/approve?id=${req.id}&token=${btoa(req.id)}`;
+                            return `
+                                <tr>
+                                    <td>${formatDate(req.createdAt)}</td>
+                                    <td>${formatNumber(req.amount)} Token</td>
+                                    <td>${req.reason}</td>
+                                    <td>
+                                        <span class="badge ${req.status === 'approved' ? 'badge-success' : req.status === 'rejected' ? 'badge-error' : 'badge-warning'}">
+                                            ${req.status === 'approved' ? '已批准' : req.status === 'rejected' ? '已拒绝' : '待审批'}
+                                        </span>
+                                    </td>
+                                    <td>${req.processedAt ? formatDate(req.processedAt) : '-'}</td>
+                                    <td>${req.rejectReason || '-'}</td>
+                                    <td>
+                                        ${req.status === 'pending' ? `
+                                            <button class="btn btn-sm btn-ghost" onclick="copyApprovalLink('${approvalLink}', '${req.id}')">
+                                                复制链接
+                                            </button>
+                                        ` : '-'}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('') : `
                             <tr>
-                                <td>${formatDate(req.createdAt)}</td>
-                                <td>${formatNumber(req.amount)} Token</td>
-                                <td>${req.reason}</td>
-                                <td>
-                                    <span class="badge ${req.status === 'approved' ? 'badge-success' : req.status === 'rejected' ? 'badge-error' : 'badge-warning'}">
-                                        ${req.status === 'approved' ? '已批准' : req.status === 'rejected' ? '已拒绝' : '待审批'}
-                                    </span>
-                                </td>
-                                <td>${req.processedAt ? formatDate(req.processedAt) : '-'}</td>
-                                <td>${req.rejectReason || '-'}</td>
-                            </tr>
-                        `).join('') : `
-                            <tr>
-                                <td colspan="6" class="text-center py-8 text-slate-400">暂无申请记录</td>
+                                <td colspan="7" class="text-center py-8 text-slate-400">暂无申请记录</td>
                             </tr>
                         `}
                     </tbody>
@@ -344,6 +355,10 @@ function renderQuotaManage(container) {
             </div>
         </div>
     `;
+}
+
+function copyApprovalLink(link, reqId) {
+    copyToClipboard(link, '审批链接');
 }
 
 // ==================== 配额审批页面 ====================
@@ -354,13 +369,26 @@ function renderQuotaRequests(container) {
     container.innerHTML = `
         <div class="card">
             <div class="card-header flex items-center justify-between">
-                <span>待审批申请</span>
-                <span class="badge badge-warning">${pendingRequests.length} 条待审批</span>
+                <div class="flex items-center gap-4">
+                    <span>待审批申请</span>
+                    <span class="badge badge-warning">${pendingRequests.length} 条待审批</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="btn btn-sm btn-success" onclick="batchApprove()" id="batchApproveBtn" style="display: none;">
+                        批量批准
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="batchReject()" id="batchRejectBtn" style="display: none;">
+                        批量拒绝
+                    </button>
+                </div>
             </div>
             <div class="table-container">
                 <table class="table">
                     <thead>
                         <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                            </th>
                             <th>申请人</th>
                             <th>申请时间</th>
                             <th>申请额度</th>
@@ -374,6 +402,9 @@ function renderQuotaRequests(container) {
                             const user = USERS.find(u => u.id === req.userId);
                             return `
                                 <tr>
+                                    <td>
+                                        <input type="checkbox" class="request-checkbox" value="${req.id}" onchange="updateBatchButtons()">
+                                    </td>
                                     <td class="font-medium">${req.userName}</td>
                                     <td>${formatDate(req.createdAt)}</td>
                                     <td>${formatNumber(req.amount)} Token</td>
@@ -389,7 +420,7 @@ function renderQuotaRequests(container) {
                             `;
                         }).join('') : `
                             <tr>
-                                <td colspan="6" class="text-center py-8 text-slate-400">暂无待审批申请</td>
+                                <td colspan="7" class="text-center py-8 text-slate-400">暂无待审批申请</td>
                             </tr>
                         `}
                     </tbody>
@@ -529,6 +560,11 @@ let detailPageSize = 10;
 let logsPage = 1;
 let logsPageSize = 10;
 let modelVendorFilter = '';
+let modelChartView = 'usage'; // 'usage' or 'requests'
+let modelDisplayMode = 'distribution'; // 'distribution' or 'trend'
+let dashboardProjectFilter = '';
+let dashboardModelFilter = '';
+let dashboardPersonFilter = '';
 
 function renderDashboard(container) {
     if (dashboardView === 'detail') {
@@ -546,16 +582,32 @@ function renderDashboard(container) {
                 <button class="tab ${dashboardView === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchDashboardTab('overview')">算力使用全景看板</button>
                 <button class="tab ${dashboardView === 'detail' ? 'active' : ''}" data-tab="detail" onclick="switchDashboardTab('detail')">用户算力使用明细</button>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-4">
+                <!-- 项目筛选 -->
+                <select class="filter-select text-sm" id="dashboardProjectFilter" onchange="setDashboardFilter('project', this.value)">
+                    <option value="">全部项目</option>
+                    ${projectUsage.map(p => `<option value="${p.name}" ${dashboardProjectFilter === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}
+                </select>
+                <!-- 模型筛选 -->
+                <select class="filter-select text-sm" id="dashboardModelFilter" onchange="setDashboardFilter('model', this.value)">
+                    <option value="">全部模型</option>
+                    ${modelDistribution.map(m => `<option value="${m.model}" ${dashboardModelFilter === m.model ? 'selected' : ''}>${m.model}</option>`).join('')}
+                </select>
+                <!-- 人员筛选 -->
+                <select class="filter-select text-sm" id="dashboardPersonFilter" onchange="setDashboardFilter('person', this.value)">
+                    <option value="">全部人员</option>
+                    ${userUsage.map(u => `<option value="${u.name}" ${dashboardPersonFilter === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+                </select>
+                <!-- 时间筛选 -->
                 <div class="flex items-center gap-1">
                     <input type="date" class="input text-sm py-1" id="customStartDate" value="${customDateRange.start || ''}" onchange="updateCustomDateRange()">
                     <span class="text-slate-400">至</span>
                     <input type="date" class="input text-sm py-1" id="customEndDate" value="${customDateRange.end || ''}" onchange="updateCustomDateRange()">
                 </div>
-                <div class="flex items-center gap-1 ml-2">
-                    <button class="btn btn-sm ${dashboardTimeRange === '7' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(7)">近7天</button>
-                    <button class="btn btn-sm ${dashboardTimeRange === '30' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(30)">近30天</button>
-                    <button class="btn btn-sm ${dashboardTimeRange === '90' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(90)">近90天</button>
+                <div class="flex items-center gap-1">
+                    <button class="btn btn-sm ${dashboardTimeRange === '1' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(1)">近1个月</button>
+                    <button class="btn btn-sm ${dashboardTimeRange === '3' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(3)">近3个月</button>
+                    <button class="btn btn-sm ${dashboardTimeRange === '6' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(6)">近6个月</button>
                 </div>
             </div>
         </div>
@@ -604,26 +656,14 @@ function renderDashboard(container) {
             </div>
         </div>
 
-        <!-- 维度筛选器 -->
-        <div class="card mb-6">
-            <div class="card-body">
-                <div class="tabs">
-                    <button class="tab ${dashboardTab === 'person' ? 'active' : ''}" data-dim="person" onclick="switchDimension('person')">按人员</button>
-                    <button class="tab ${dashboardTab === 'department' ? 'active' : ''}" data-dim="department" onclick="switchDimension('department')">按部门</button>
-                    <button class="tab ${dashboardTab === 'model' ? 'active' : ''}" data-dim="model" onclick="switchDimension('model')">按模型</button>
-                    <button class="tab ${dashboardTab === 'project' ? 'active' : ''}" data-dim="project" onclick="switchDimension('project')">按项目</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 图表和表格 -->
+        <!-- 综合看板（所有维度合并） -->
         <div id="dashboardContent">
-            ${renderDashboardContent()}
+            ${renderIntegratedDashboard()}
         </div>
     `;
 
-    // 初始化当前维度的图表
-    setTimeout(() => initDashboardCharts(dashboardTab), 0);
+    // 初始化综合看板的图表
+    setTimeout(() => initIntegratedDashboardCharts(), 0);
 }
 
 function renderDashboardContent() {
@@ -799,6 +839,326 @@ function renderModelDashboard() {
     `;
 }
 
+// ==================== 综合看板（合并所有维度） ====================
+
+function renderIntegratedDashboard() {
+    return `
+        <!-- 按人员统计 -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="card">
+                <div class="card-header">人员Token使用排行 (TOP10)</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="personRankChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header flex items-center justify-between">
+                    <span>人员Token使用明细</span>
+                    <button class="btn btn-sm btn-ghost" onclick="exportPersonUsageDetail()" title="导出">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>姓名</th>
+                                <th>部门</th>
+                                <th>所属项目</th>
+                                <th>Token使用量</th>
+                                <th>占比</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${userUsage.slice(0, 10).map((u, i) => `
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td>${u.name}</td>
+                                    <td>${u.department}</td>
+                                    <td>${u.project || '-'}</td>
+                                    <td>${formatNumber(u.usage)}</td>
+                                    <td>${u.percentage}%</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 按项目统计 -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="card">
+                <div class="card-header">项目Token使用排行 (TOP10)</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="projRankChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header flex items-center justify-between">
+                    <span>项目Token使用明细</span>
+                    <button class="btn btn-sm btn-ghost" onclick="exportProjectUsageDetail()" title="导出">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>项目名称</th>
+                                <th>Token使用量</th>
+                                <th>占比</th>
+                                <th>活跃用户数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${projectUsage.slice(0, 10).map((p, i) => `
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td>${p.name}</td>
+                                    <td>${formatNumber(p.usage)}</td>
+                                    <td>${p.percentage}%</td>
+                                    <td>${p.users}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 按模型统计 -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="card">
+                <div class="card-header flex items-center justify-between">
+                    <span>模型使用统计</span>
+                    <div class="flex items-center gap-2">
+                        <button class="btn btn-sm ${modelDisplayMode === 'distribution' ? 'btn-primary' : 'btn-secondary'}" onclick="switchModelDisplayMode('distribution')">分布</button>
+                        <button class="btn btn-sm ${modelDisplayMode === 'trend' ? 'btn-primary' : 'btn-secondary'}" onclick="switchModelDisplayMode('trend')">趋势</button>
+                        <span class="text-slate-300">|</span>
+                        <button class="btn btn-sm ${modelChartView === 'usage' ? 'btn-primary' : 'btn-secondary'}" onclick="switchModelChartView('usage')">Token</button>
+                        <button class="btn btn-sm ${modelChartView === 'requests' ? 'btn-primary' : 'btn-secondary'}" onclick="switchModelChartView('requests')">次数</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="modelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header flex items-center justify-between">
+                    <span>模型使用明细</span>
+                    <button class="btn btn-sm btn-ghost" onclick="exportModelUsageDetail()" title="导出">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="table-container" style="max-height: 340px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>模型名称</th>
+                                <th>模型厂商</th>
+                                <th>Token使用量</th>
+                                <th>占比</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${modelDistribution.slice(0, 10).map((m, i) => `
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td>${m.model}</td>
+                                    <td>${m.vendor || '-'}</td>
+                                    <td>${formatNumber(m.usage)}</td>
+                                    <td>${m.percentage}%</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function initIntegratedDashboardCharts() {
+    const chartColors = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#1d4ed8', '#1e40af'];
+
+    // 人员排行图表
+    const personCtx = document.getElementById('personRankChart');
+    if (personCtx) {
+        charts.personRank = new Chart(personCtx, {
+            type: 'bar',
+            data: {
+                labels: userUsage.slice(0, 10).map(u => u.name),
+                datasets: [{
+                    label: 'Token使用量',
+                    data: userUsage.slice(0, 10).map(u => u.usage),
+                    backgroundColor: chartColors[0],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // 项目排行图表
+    const projCtx = document.getElementById('projRankChart');
+    if (projCtx) {
+        charts.projRank = new Chart(projCtx, {
+            type: 'bar',
+            data: {
+                labels: projectUsage.slice(0, 10).map(p => p.name),
+                datasets: [{
+                    label: 'Token使用量',
+                    data: projectUsage.slice(0, 10).map(p => p.usage),
+                    backgroundColor: chartColors[1],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // 模型统一图表（支持切换）
+    initModelChart();
+}
+
+function initModelChart() {
+    const ctx = document.getElementById('modelChart');
+    if (!ctx) return;
+
+    const chartColors = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#1d4ed8'];
+
+    if (charts.modelChart) {
+        charts.modelChart.destroy();
+    }
+
+    // 趋势模式
+    if (modelDisplayMode === 'trend') {
+        const trendData = modelChartView === 'usage' ? modelTrendData.usage : modelTrendData.requests;
+        const yLabel = modelChartView === 'usage' ? 'Token使用量' : '请求次数';
+
+        charts.modelChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: modelTrendData.labels,
+                datasets: trendData.map((ds, i) => ({
+                    label: ds.model,
+                    data: ds.data,
+                    borderColor: chartColors[i],
+                    backgroundColor: chartColors[i] + '20',
+                    fill: false,
+                    tension: 0.4
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, padding: 10 } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: yLabel }
+                    }
+                }
+            }
+        });
+        return;
+    }
+
+    // 分布模式
+    const isUsage = modelChartView === 'usage';
+
+    if (isUsage) {
+        // Token消耗 - 饼图
+        charts.modelChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: modelDistribution.map(m => m.model),
+                datasets: [{
+                    data: modelDistribution.map(m => m.usage),
+                    backgroundColor: chartColors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: { position: 'right', labels: { usePointStyle: true, padding: 15 } }
+                }
+            }
+        });
+    } else {
+        // 请求次数 - 柱状图
+        charts.modelChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: modelDistribution.map(m => m.model),
+                datasets: [{
+                    label: '请求次数',
+                    data: modelDistribution.map(m => m.requests),
+                    backgroundColor: chartColors[0],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+}
+
+function switchModelChartView(view) {
+    modelChartView = view;
+    initModelChart();
+    renderCurrentPage();
+}
+
+function switchModelDisplayMode(mode) {
+    modelDisplayMode = mode;
+    initModelChart();
+    renderCurrentPage();
+}
+
 function renderProjectDashboard() {
     return `
         <div class="grid grid-cols-2 gap-6">
@@ -882,9 +1242,9 @@ function renderDashboardDetail() {
                     <input type="date" class="input text-sm py-1" id="detailEndDate" value="${customDateRange.end || ''}" onchange="updateDetailDateRange()">
                 </div>
                 <div class="flex items-center gap-1">
-                    <button class="btn btn-sm ${dashboardTimeRange === '7' ? 'btn-primary' : 'btn-secondary'}" onclick="setDetailQuickRange(7)">近7天</button>
-                    <button class="btn btn-sm ${dashboardTimeRange === '30' ? 'btn-primary' : 'btn-secondary'}" onclick="setDetailQuickRange(30)">近30天</button>
-                    <button class="btn btn-sm ${dashboardTimeRange === '90' ? 'btn-primary' : 'btn-secondary'}" onclick="setDetailQuickRange(90)">近90天</button>
+                    <button class="btn btn-sm ${dashboardTimeRange === '1' ? 'btn-primary' : 'btn-secondary'}" onclick="setDetailQuickRange(1)">近1个月</button>
+                    <button class="btn btn-sm ${dashboardTimeRange === '3' ? 'btn-primary' : 'btn-secondary'}" onclick="setDetailQuickRange(3)">近3个月</button>
+                    <button class="btn btn-sm ${dashboardTimeRange === '6' ? 'btn-primary' : 'btn-secondary'}" onclick="setDetailQuickRange(6)">近6个月</button>
                 </div>
             </div>
         </div>
@@ -998,17 +1358,17 @@ function updateDetailDateRange() {
     }
 }
 
-function setDetailQuickRange(days) {
+function setDetailQuickRange(months) {
     const end = new Date();
     const start = new Date();
-    start.setDate(start.getDate() - days);
+    start.setMonth(start.getMonth() - months);
     customDateRange = {
         start: start.toISOString().split('T')[0],
         end: end.toISOString().split('T')[0]
     };
-    dashboardTimeRange = String(days);
+    dashboardTimeRange = String(months);
     detailPage = 1; // 重置到第一页
-    showToast('info', '时间范围已切换', `近${days}天`);
+    showToast('info', '时间范围已切换', `近${months}个月`);
     renderCurrentPage();
 }
 
@@ -1057,6 +1417,73 @@ function exportUserUsageDetail() {
     document.body.removeChild(link);
 
     showToast('success', '导出成功', `已导出 ${data.length} 条数据`);
+}
+
+// 导出人员Token使用明细
+function exportPersonUsageDetail() {
+    const data = userUsage;
+    const headers = ['排名', '姓名', '部门', '所属项目', 'Token使用量', '占比'];
+    const rows = data.map((item, i) => [
+        i + 1,
+        item.name,
+        item.department,
+        item.project || '-',
+        item.usage,
+        item.percentage + '%'
+    ]);
+    exportToCSV(headers, rows, '人员Token使用明细');
+}
+
+// 导出项目Token使用明细
+function exportProjectUsageDetail() {
+    const data = projectUsage;
+    const headers = ['排名', '项目名称', 'Token使用量', '占比', '活跃用户数'];
+    const rows = data.map((item, i) => [
+        i + 1,
+        item.name,
+        item.usage,
+        item.percentage + '%',
+        item.users
+    ]);
+    exportToCSV(headers, rows, '项目Token使用明细');
+}
+
+// 导出模型使用明细
+function exportModelUsageDetail() {
+    const data = modelDistribution;
+    const headers = ['排名', '模型名称', '模型厂商', 'Token使用量', '占比'];
+    const rows = data.map((item, i) => [
+        i + 1,
+        item.model,
+        item.vendor || '-',
+        item.usage,
+        item.percentage + '%'
+    ]);
+    exportToCSV(headers, rows, '模型使用明细');
+}
+
+// 通用导出函数
+function exportToCSV(headers, rows, filename) {
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const date = new Date().toISOString().split('T')[0];
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}_${date}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast('success', '导出成功', `已导出 ${rows.length} 条数据`);
 }
 
 function showProjectDetail(projectName) {
@@ -1130,11 +1557,26 @@ function switchDimension(dim) {
     setTimeout(() => initDashboardCharts(dim), 0);
 }
 
+function setDashboardFilter(type, value) {
+    switch(type) {
+        case 'project':
+            dashboardProjectFilter = value;
+            break;
+        case 'model':
+            dashboardModelFilter = value;
+            break;
+        case 'person':
+            dashboardPersonFilter = value;
+            break;
+    }
+    renderCurrentPage();
+}
+
 function changeTimeRange(range) {
     dashboardTimeRange = range;
     const label = range === 'custom'
         ? `${customDateRange.start} 至 ${customDateRange.end}`
-        : `近${range}天`;
+        : `近${range}个月`;
     showToast('info', '时间范围已切换', `已切换为${label}`);
     renderCurrentPage();
 }
@@ -1150,15 +1592,15 @@ function updateCustomDateRange() {
     }
 }
 
-function setQuickRange(days) {
+function setQuickRange(months) {
     const end = new Date();
     const start = new Date();
-    start.setDate(start.getDate() - days);
+    start.setMonth(start.getMonth() - months);
     customDateRange = {
         start: start.toISOString().split('T')[0],
         end: end.toISOString().split('T')[0]
     };
-    dashboardTimeRange = String(days);
+    dashboardTimeRange = String(months);
     changeTimeRange(dashboardTimeRange);
 }
 
@@ -1443,7 +1885,6 @@ function renderModelManagement(container) {
                             <th>模型类型</th>
                             <th>模型厂商</th>
                             <th>API地址</th>
-                            <th>API密钥</th>
                             <th>状态</th>
                             <th>操作</th>
                         </tr>
@@ -1464,7 +1905,6 @@ function renderModelTable(models) {
             <td><span class="badge bg-slate-100 text-slate-600">${model.category}</span></td>
             <td>${model.vendor}</td>
             <td class="font-mono text-sm text-slate-500">${model.apiUrl}</td>
-            <td class="font-mono text-sm text-slate-500">${model.apiKey}</td>
             <td>
                 <span class="badge ${model.status === 'active' ? 'badge-success' : 'badge-error'}">
                     ${model.status === 'active' ? '可用' : '不可用'}
@@ -1475,11 +1915,6 @@ function renderModelTable(models) {
                     <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('${model.apiUrl}', 'API地址')" title="复制API地址">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                        </svg>
-                    </button>
-                    <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('${model.apiKey}', 'API密钥')" title="复制API密钥">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                         </svg>
                     </button>
                     <button class="btn btn-sm btn-secondary" onclick="showModelTestModal('${model.id}')">测试</button>
@@ -2215,6 +2650,107 @@ function confirmReject(id) {
         renderCurrentPage();
         showToast('success', '已拒绝', `已拒绝用户 ${request.userName} 的额度申请`);
     }
+}
+
+// ==================== 批量审批功能 ====================
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.request-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    updateBatchButtons();
+}
+
+function updateBatchButtons() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const batchApproveBtn = document.getElementById('batchApproveBtn');
+    const batchRejectBtn = document.getElementById('batchRejectBtn');
+
+    if (checkboxes.length > 0) {
+        batchApproveBtn.style.display = 'inline-flex';
+        batchRejectBtn.style.display = 'inline-flex';
+    } else {
+        batchApproveBtn.style.display = 'none';
+        batchRejectBtn.style.display = 'none';
+    }
+}
+
+function getSelectedRequestIds() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function batchApprove() {
+    const selectedIds = getSelectedRequestIds();
+    if (selectedIds.length === 0) return;
+
+    showModal('批量批准', `
+        <p>确定要批准选中的 <strong>${selectedIds.length}</strong> 条申请吗？</p>
+    `, `
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-success" onclick="confirmBatchApprove()">确认批准</button>
+    `);
+}
+
+function confirmBatchApprove() {
+    const selectedIds = getSelectedRequestIds();
+    let approvedCount = 0;
+
+    selectedIds.forEach(id => {
+        const request = quotaRequests.find(r => r.id === id);
+        if (request && request.status === 'pending') {
+            request.status = 'approved';
+            request.processedAt = new Date().toISOString().split('T')[0];
+            request.processedBy = '管理员';
+
+            // 更新用户额度
+            const user = USERS.find(u => u.id === request.userId);
+            if (user) {
+                user.quota += request.amount;
+            }
+            approvedCount++;
+        }
+    });
+
+    closeModal();
+    renderCurrentPage();
+    showToast('success', '批量审批完成', `已批准 ${approvedCount} 条申请`);
+}
+
+function batchReject() {
+    const selectedIds = getSelectedRequestIds();
+    if (selectedIds.length === 0) return;
+
+    showModal('批量拒绝', `
+        <div class="form-group">
+            <label class="form-label">拒绝原因</label>
+            <textarea class="form-input" id="batchRejectReason" rows="3" placeholder="请说明拒绝原因"></textarea>
+        </div>
+    `, `
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmBatchReject()">确认拒绝</button>
+    `);
+}
+
+function confirmBatchReject() {
+    const selectedIds = getSelectedRequestIds();
+    const reason = document.getElementById('batchRejectReason').value || '管理员批量拒绝';
+    let rejectedCount = 0;
+
+    selectedIds.forEach(id => {
+        const request = quotaRequests.find(r => r.id === id);
+        if (request && request.status === 'pending') {
+            request.status = 'rejected';
+            request.processedAt = new Date().toISOString().split('T')[0];
+            request.processedBy = '管理员';
+            request.rejectReason = reason;
+            rejectedCount++;
+        }
+    });
+
+    closeModal();
+    renderCurrentPage();
+    showToast('success', '批量审批完成', `已拒绝 ${rejectedCount} 条申请`);
 }
 
 // ==================== 用户管理 ====================

@@ -93,12 +93,32 @@ const monthlyUsageData = {
 
 // 模型使用分布
 const modelDistribution = [
-    { model: 'GLM4.7', usage: 116000, percentage: 35.6 },
-    { model: 'GPT-4', usage: 78000, percentage: 24.0 },
-    { model: 'Claude3', usage: 52000, percentage: 16.0 },
-    { model: 'LLaMA-70B', usage: 39000, percentage: 12.0 },
-    { model: '其他', usage: 40680, percentage: 12.4 }
+    { model: 'GLM4.7', vendor: '智谱AI', usage: 116000, percentage: 35.6, requests: 4500 },
+    { model: 'GPT-4', vendor: 'OpenAI', usage: 78000, percentage: 24.0, requests: 3200 },
+    { model: 'Claude3', vendor: 'Anthropic', usage: 52000, percentage: 16.0, requests: 2100 },
+    { model: 'LLaMA-70B', vendor: 'Meta', usage: 39000, percentage: 12.0, requests: 1800 },
+    { model: 'Qwen-Max', vendor: '通义千问', usage: 28000, percentage: 8.6, requests: 1200 },
+    { model: '其他', vendor: '-', usage: 12680, percentage: 3.8, requests: 500 }
 ];
+
+// 模型使用趋势数据
+const modelTrendData = {
+    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+    usage: [
+        { model: 'GLM4.7', data: [85000, 92000, 98000, 105000, 110000, 116000] },
+        { model: 'GPT-4', data: [52000, 58000, 62000, 68000, 72000, 78000] },
+        { model: 'Claude3', data: [35000, 38000, 42000, 45000, 48000, 52000] },
+        { model: 'LLaMA-70B', data: [28000, 30000, 32000, 34000, 36000, 39000] },
+        { model: 'Qwen-Max', data: [15000, 18000, 20000, 22000, 25000, 28000] }
+    ],
+    requests: [
+        { model: 'GLM4.7', data: [3200, 3500, 3800, 4000, 4200, 4500] },
+        { model: 'GPT-4', data: [2400, 2600, 2800, 2900, 3000, 3200] },
+        { model: 'Claude3', data: [1600, 1700, 1800, 1900, 2000, 2100] },
+        { model: 'LLaMA-70B', data: [1400, 1500, 1550, 1600, 1700, 1800] },
+        { model: 'Qwen-Max', data: [800, 900, 950, 1000, 1100, 1200] }
+    ]
+};
 
 // 运营看板 - 总览数据
 const dashboardOverview = {
