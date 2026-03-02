@@ -7,6 +7,9 @@
 let currentPage = 'my-computing';
 let charts = {};
 let quotaSubPage = 'apply'; // 'apply' | 'approve' | 'batch'
+let userQuotaPage = 1;
+let userQuotaPageSize = 10;
+let detailVisibleDepts = ['deptLevel5']; // 默认显示最小部门(五级)
 
 // ==================== 初始化 ====================
 
@@ -466,22 +469,31 @@ function renderQuotaRequests(container) {
 
 // ==================== 用户额度管理页面 ====================
 
+let selectedUsers = []; // 批量选择用户ID
+
 function renderUserManagement(container) {
+    const totalUsers = USERS.length;
+    const totalPages = Math.ceil(totalUsers / userQuotaPageSize);
+    const startIndex = (userQuotaPage - 1) * userQuotaPageSize;
+    const endIndex = Math.min(startIndex + userQuotaPageSize, totalUsers);
+    const paginatedUsers = USERS.slice(startIndex, endIndex);
+
     container.innerHTML = `
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
-                <button class="btn btn-secondary" onclick="importUsers()">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                    </svg>
-                    批量导入
-                </button>
                 <button class="btn btn-secondary" onclick="exportUsers()">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
                     批量导出
                 </button>
+                <button class="btn btn-primary" id="batchEditBtn" onclick="showBatchEditModal()" style="display: none;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    批量编辑
+                </button>
+                <span id="selectedCount" class="text-sm text-slate-500" style="display: none;">已选择 <span id="selectedNum">0</span> 项</span>
             </div>
             <button class="btn btn-primary" onclick="showAddUserModal()">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -496,6 +508,9 @@ function renderUserManagement(container) {
                 <table class="table">
                     <thead>
                         <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers()">
+                            </th>
                             <th>用户姓名</th>
                             <th>所属部门</th>
                             <th>所属项目</th>
@@ -508,12 +523,15 @@ function renderUserManagement(container) {
                         </tr>
                     </thead>
                     <tbody>
-                        ${USERS.map(user => {
+                        ${paginatedUsers.map(user => {
                             const remaining = user.quota - user.used;
                             const rate = calculateUsageRate(user.used, user.quota);
                             const status = getUsageStatus(rate);
                             return `
                                 <tr>
+                                    <td>
+                                        <input type="checkbox" class="user-checkbox" value="${user.id}" onchange="toggleUserSelection('${user.id}')">
+                                    </td>
                                     <td class="font-medium">${user.name}</td>
                                     <td>${user.department}</td>
                                     <td>${user.project || '-'}</td>
@@ -546,7 +564,170 @@ function renderUserManagement(container) {
                 </table>
             </div>
         </div>
+
+        <!-- 分页控件 -->
+        <div class="flex items-center justify-between mt-4">
+            <span class="text-sm text-slate-500">共 ${totalUsers} 条记录，第 ${userQuotaPage}/${totalPages} 页</span>
+            <div class="flex items-center gap-2">
+                <button class="btn btn-sm btn-secondary" onclick="goToUserQuotaPage(1)" ${userQuotaPage === 1 ? 'disabled' : ''}>首页</button>
+                <button class="btn btn-sm btn-secondary" onclick="goToUserQuotaPage(${userQuotaPage - 1})" ${userQuotaPage === 1 ? 'disabled' : ''}>上一页</button>
+                ${renderUserQuotaPageNumbers(totalPages)}
+                <button class="btn btn-sm btn-secondary" onclick="goToUserQuotaPage(${userQuotaPage + 1})" ${userQuotaPage === totalPages ? 'disabled' : ''}>下一页</button>
+                <button class="btn btn-sm btn-secondary" onclick="goToUserQuotaPage(${totalPages})" ${userQuotaPage === totalPages ? 'disabled' : ''}>末页</button>
+            </div>
+        </div>
     `;
+}
+
+// 渲染分页页码
+function renderUserQuotaPageNumbers(totalPages) {
+    let pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, userQuotaPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+        start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+        pages.push(`<button class="btn btn-sm ${i === userQuotaPage ? 'btn-primary' : 'btn-secondary'}" onclick="goToUserQuotaPage(${i})">${i}</button>`);
+    }
+    return pages.join('');
+}
+
+// 跳转页面
+function goToUserQuotaPage(page) {
+    const totalPages = Math.ceil(USERS.length / userQuotaPageSize);
+    if (page < 1 || page > totalPages) return;
+    userQuotaPage = page;
+    selectedUsers = []; // 清空选择
+    renderCurrentPage();
+}
+
+// 全选/取消全选
+function toggleSelectAllUsers() {
+    const selectAll = document.getElementById('selectAllUsers');
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+
+    if (selectAll.checked) {
+        selectedUsers = USERS.map(u => u.id);
+        checkboxes.forEach(cb => cb.checked = true);
+    } else {
+        selectedUsers = [];
+        checkboxes.forEach(cb => cb.checked = false);
+    }
+    updateBatchEditUI();
+}
+
+// 单个选择
+function toggleUserSelection(userId) {
+    const checkbox = document.querySelector(`.user-checkbox[value="${userId}"]`);
+    if (checkbox.checked) {
+        if (!selectedUsers.includes(userId)) {
+            selectedUsers.push(userId);
+        }
+    } else {
+        selectedUsers = selectedUsers.filter(id => id !== userId);
+    }
+
+    // 更新全选框状态
+    const selectAll = document.getElementById('selectAllUsers');
+    if (selectAll) {
+        selectAll.checked = selectedUsers.length === USERS.length && USERS.length > 0;
+    }
+
+    updateBatchEditUI();
+}
+
+// 更新批量编辑UI
+function updateBatchEditUI() {
+    const batchBtn = document.getElementById('batchEditBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectedNum = document.getElementById('selectedNum');
+
+    if (selectedUsers.length > 0) {
+        batchBtn.style.display = 'inline-flex';
+        selectedCount.style.display = 'inline';
+        selectedNum.textContent = selectedUsers.length;
+    } else {
+        batchBtn.style.display = 'none';
+        selectedCount.style.display = 'none';
+    }
+}
+
+// 显示批量编辑弹窗
+function showBatchEditModal() {
+    const selectedUserNames = selectedUsers.map(id => {
+        const user = USERS.find(u => u.id === id);
+        return user ? user.name : '';
+    }).join('、');
+
+    const content = `
+        <p class="mb-4">已选择 <span class="font-medium">${selectedUsers.length}</span> 个用户：${selectedUserNames}</p>
+        <div class="form-group">
+            <label class="form-label">调整方式</label>
+            <select class="form-input" id="batchAdjustType" onchange="toggleBatchAdjustInput()">
+                <option value="set">设置为固定值</option>
+                <option value="add">增加额度</option>
+                <option value="subtract">减少额度</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label" id="adjustAmountLabel">新额度 (Token)</label>
+            <input type="number" class="form-input" id="batchAdjustAmount" placeholder="请输入额度" min="0">
+        </div>
+    `;
+
+    const footer = `
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="executeBatchEdit()">确定</button>
+    `;
+
+    showModal('批量编辑用户额度', content, footer);
+}
+
+// 切换调整类型时更新提示
+function toggleBatchAdjustInput() {
+    const type = document.getElementById('batchAdjustType').value;
+    const label = document.getElementById('adjustAmountLabel');
+    if (type === 'set') {
+        label.textContent = '新额度 (Token)';
+    } else if (type === 'add') {
+        label.textContent = '增加额度 (Token)';
+    } else {
+        label.textContent = '减少额度 (Token)';
+    }
+}
+
+// 执行批量编辑
+function executeBatchEdit() {
+    const type = document.getElementById('batchAdjustType').value;
+    const amount = parseInt(document.getElementById('batchAdjustAmount').value);
+
+    if (isNaN(amount) || amount < 0) {
+        showToast('error', '请输入有效的额度');
+        return;
+    }
+
+    selectedUsers.forEach(userId => {
+        const user = USERS.find(u => u.id === userId);
+        if (user) {
+            if (type === 'set') {
+                user.quota = amount;
+            } else if (type === 'add') {
+                user.quota += amount;
+            } else if (type === 'subtract') {
+                user.quota = Math.max(0, user.quota - amount);
+            }
+        }
+    });
+
+    const updatedCount = selectedUsers.length;
+    closeModal();
+    selectedUsers = [];
+    renderCurrentPage();
+    showToast('success', '批量编辑成功', `已更新 ${updatedCount} 个用户的额度`);
 }
 
 // ==================== 运营看板页面 ====================
@@ -559,7 +740,16 @@ let detailPage = 1;
 let detailPageSize = 10;
 let logsPage = 1;
 let logsPageSize = 10;
+let logFilter = {
+    startDate: '',
+    endDate: '',
+    token: '',
+    model: '',
+    user: ''
+};
 let modelVendorFilter = '';
+let modelSortField = 'requestCount'; // 默认按调用次数排序
+let modelSortOrder = 'desc'; // 降序
 let modelChartView = 'usage'; // 'usage' or 'requests'
 let modelDisplayMode = 'distribution'; // 'distribution' or 'trend'
 let dashboardProjectFilter = '';
@@ -870,6 +1060,8 @@ function renderIntegratedDashboard() {
                                 <th>姓名</th>
                                 <th>部门</th>
                                 <th>所属项目</th>
+                                <th>使用模型</th>
+                                <th>请求次数</th>
                                 <th>Token使用量</th>
                                 <th>占比</th>
                             </tr>
@@ -879,8 +1071,10 @@ function renderIntegratedDashboard() {
                                 <tr>
                                     <td>${i + 1}</td>
                                     <td>${u.name}</td>
-                                    <td>${u.department}</td>
+                                    <td>${u.deptLevel5 || u.department || '-'}</td>
                                     <td>${u.project || '-'}</td>
+                                    <td>${u.topModel || '-'}</td>
+                                    <td>${formatNumber(u.requestCount || 0)}</td>
                                     <td>${formatNumber(u.usage)}</td>
                                     <td>${u.percentage}%</td>
                                 </tr>
@@ -1224,7 +1418,7 @@ function renderDashboardDetail() {
         <div class="flex items-center justify-between mb-6">
             <div class="tabs">
                 <button class="tab ${dashboardView === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchDashboardTab('overview')">算力使用全景看板</button>
-                <button class="tab ${dashboardView === 'detail' ? 'active' : ''}" data-tab="detail" onclick="switchDashboardTab('detail')">项目算力使用明细</button>
+                <button class="tab ${dashboardView === 'detail' ? 'active' : ''}" data-tab="detail" onclick="switchDashboardTab('detail')">用户算力使用明细</button>
             </div>
             <div class="flex items-center gap-4">
                 <!-- 项目筛选器 -->
@@ -1255,12 +1449,21 @@ function renderDashboardDetail() {
                 <div class="flex items-center gap-2">
                     <span>用户算力使用明细</span>
                 </div>
-                <button class="btn btn-sm btn-secondary" onclick="exportUserUsageDetail()">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    导出
-                </button>
+                <div class="flex items-center gap-2">
+                    <button class="btn btn-sm btn-secondary" onclick="showDetailFieldSettings()">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        字段设置
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="exportUserUsageDetail()">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        导出
+                    </button>
+                </div>
             </div>
             <div class="table-container">
                 <table class="table">
@@ -1268,8 +1471,14 @@ function renderDashboardDetail() {
                         <tr>
                             <th>排名</th>
                             <th>姓名</th>
-                            <th>所属部门</th>
+                            ${detailVisibleDepts.includes('deptLevel1') ? '<th>一级部门</th>' : ''}
+                            ${detailVisibleDepts.includes('deptLevel2') ? '<th>二级部门</th>' : ''}
+                            ${detailVisibleDepts.includes('deptLevel3') ? '<th>三级部门</th>' : ''}
+                            ${detailVisibleDepts.includes('deptLevel4') ? '<th>四级部门</th>' : ''}
+                            ${detailVisibleDepts.includes('deptLevel5') ? '<th>最小部门</th>' : ''}
                             <th>所属项目</th>
+                            <th>使用模型</th>
+                            <th>请求次数</th>
                             <th>Token使用量</th>
                             <th>占比</th>
                             <th>环比变化</th>
@@ -1322,13 +1531,19 @@ function changeDetailPage(page) {
 
 function renderDetailTable(data, startIndex = 1) {
     // 判断是用户数据还是项目数据
-    const isUserData = data[0] && 'department' in data[0];
+    const isUserData = data[0] && 'deptLevel1' in data[0];
     return data.map((item, i) => `
         <tr>
             <td>${item.rank || startIndex + i}</td>
             <td class="font-medium">${item.name}</td>
-            <td>${isUserData ? item.department : '-'}</td>
+            ${detailVisibleDepts.includes('deptLevel1') ? `<td>${isUserData ? (item.deptLevel1 || '-') : '-'}</td>` : ''}
+            ${detailVisibleDepts.includes('deptLevel2') ? `<td>${isUserData ? (item.deptLevel2 || '-') : '-'}</td>` : ''}
+            ${detailVisibleDepts.includes('deptLevel3') ? `<td>${isUserData ? (item.deptLevel3 || '-') : '-'}</td>` : ''}
+            ${detailVisibleDepts.includes('deptLevel4') ? `<td>${isUserData ? (item.deptLevel4 || '-') : '-'}</td>` : ''}
+            ${detailVisibleDepts.includes('deptLevel5') ? `<td>${isUserData ? (item.deptLevel5 || '-') : '-'}</td>` : ''}
             <td>${isUserData ? item.project : item.name}</td>
+            <td>${isUserData ? (item.topModel || '-') : '-'}</td>
+            <td>${isUserData ? formatNumber(item.requestCount || 0) : '-'}</td>
             <td>${formatNumber(item.usage)}</td>
             <td>${item.percentage}%</td>
             <td>
@@ -1343,6 +1558,55 @@ function renderDetailTable(data, startIndex = 1) {
 function filterDetailByProject(projectName) {
     detailPage = 1; // 重置到第一页
     renderCurrentPage();
+}
+
+// 显示字段设置弹窗
+function showDetailFieldSettings() {
+    const deptOptions = [
+        { key: 'deptLevel1', label: '一级部门' },
+        { key: 'deptLevel2', label: '二级部门' },
+        { key: 'deptLevel3', label: '三级部门' },
+        { key: 'deptLevel4', label: '四级部门' },
+        { key: 'deptLevel5', label: '最小部门' }
+    ];
+
+    const content = `
+        <div class="form-group">
+            <label class="form-label">选择要显示的部门字段</label>
+            <div class="space-y-2">
+                ${deptOptions.map(opt => `
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="checkbox" value="${opt.key}"
+                            ${detailVisibleDepts.includes(opt.key) ? 'checked' : ''}
+                            onchange="toggleDetailDeptField('${opt.key}')">
+                        <span>${opt.label}</span>
+                    </label>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    const footer = `
+        <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+    `;
+
+    showModal('字段设置', content, footer);
+}
+
+// 切换部门字段显示
+function toggleDetailDeptField(deptKey) {
+    if (detailVisibleDepts.includes(deptKey)) {
+        detailVisibleDepts = detailVisibleDepts.filter(d => d !== deptKey);
+    } else {
+        detailVisibleDepts.push(deptKey);
+    }
+    // 至少保留一个字段
+    if (detailVisibleDepts.length === 0) {
+        detailVisibleDepts = ['deptLevel5'];
+    }
+    renderCurrentPage();
+    // 重新打开弹窗以更新选中状态
+    setTimeout(() => showDetailFieldSettings(), 100);
 }
 
 function updateDetailDateRange() {
@@ -1377,15 +1641,21 @@ function exportUserUsageDetail() {
     // 获取当前筛选后的数据（所有数据，非分页）
     const data = userUsage;
 
-    // 表头
-    const headers = ['排名', '姓名', '所属部门', '所属项目', 'Token使用量', '占比', '环比变化'];
+    // 表头 - 包含所有部门级别
+    const headers = ['排名', '姓名', '一级部门', '二级部门', '三级部门', '四级部门', '最小部门', '所属项目', '使用模型', '请求次数', 'Token使用量', '占比', '环比变化'];
 
     // 数据行
     const rows = data.map(item => [
         item.rank || '-',
         item.name,
-        item.department,
+        item.deptLevel1 || '-',
+        item.deptLevel2 || '-',
+        item.deptLevel3 || '-',
+        item.deptLevel4 || '-',
+        item.deptLevel5 || '-',
         item.project,
+        item.topModel || '-',
+        item.requestCount || 0,
         item.usage,
         item.percentage + '%',
         (item.change >= 0 ? '+' : '') + item.change + '%'
@@ -1422,12 +1692,18 @@ function exportUserUsageDetail() {
 // 导出人员Token使用明细
 function exportPersonUsageDetail() {
     const data = userUsage;
-    const headers = ['排名', '姓名', '部门', '所属项目', 'Token使用量', '占比'];
+    const headers = ['排名', '姓名', '一级部门', '二级部门', '三级部门', '四级部门', '最小部门', '所属项目', '使用模型', '请求次数', 'Token使用量', '占比'];
     const rows = data.map((item, i) => [
         i + 1,
         item.name,
-        item.department,
+        item.deptLevel1 || '-',
+        item.deptLevel2 || '-',
+        item.deptLevel3 || '-',
+        item.deptLevel4 || '-',
+        item.deptLevel5 || '-',
         item.project || '-',
+        item.topModel || '-',
+        item.requestCount || 0,
         item.usage,
         item.percentage + '%'
     ]);
@@ -1773,7 +2049,6 @@ function renderProjects(container) {
                                     <td>
                                         <div class="flex items-center gap-2">
                                             <button class="btn btn-sm btn-secondary" onclick="editProject('${proj.id}')">编辑</button>
-                                            <button class="btn btn-sm btn-secondary" onclick="manageMembers('${proj.id}')">管理成员</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -1841,16 +2116,19 @@ function getVendorList() {
 
 function renderModelManagement(container) {
     const vendors = getVendorList();
-    const categoryFilter = document.getElementById('modelCategoryFilter')?.value || '';
 
     // 筛选模型
     let filteredModels = MODELS;
     if (modelVendorFilter) {
         filteredModels = filteredModels.filter(m => m.vendor === modelVendorFilter);
     }
-    if (categoryFilter) {
-        filteredModels = filteredModels.filter(m => m.category === categoryFilter);
-    }
+
+    // 排序
+    filteredModels = [...filteredModels].sort((a, b) => {
+        const aVal = a[modelSortField] || 0;
+        const bVal = b[modelSortField] || 0;
+        return modelSortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+    });
 
     container.innerHTML = `
         <div class="card">
@@ -1868,14 +2146,8 @@ function renderModelManagement(container) {
                     </div>
                 </div>
             </div>
-            <div class="card-header flex items-center justify-between">
+            <div class="card-header">
                 <span>可用模型清单</span>
-                <select class="filter-select text-sm" id="modelCategoryFilter" onchange="filterModels()">
-                    <option value="">全部类型</option>
-                    <option value="大语言模型" ${categoryFilter === '大语言模型' ? 'selected' : ''}>大语言模型</option>
-                    <option value="图像生成" ${categoryFilter === '图像生成' ? 'selected' : ''}>图像生成</option>
-                    <option value="语音识别" ${categoryFilter === '语音识别' ? 'selected' : ''}>语音识别</option>
-                </select>
             </div>
             <div class="table-container">
                 <table class="table">
@@ -1884,6 +2156,9 @@ function renderModelManagement(container) {
                             <th>模型名称</th>
                             <th>模型类型</th>
                             <th>模型厂商</th>
+                            <th class="cursor-pointer hover:text-primary" onclick="sortModels('requestCount')">
+                                调用次数 ${modelSortField === 'requestCount' ? (modelSortOrder === 'desc' ? '↓' : '↑') : ''}
+                            </th>
                             <th>API地址</th>
                             <th>状态</th>
                             <th>操作</th>
@@ -1898,12 +2173,24 @@ function renderModelManagement(container) {
     `;
 }
 
+// 模型表格排序
+function sortModels(field) {
+    if (modelSortField === field) {
+        modelSortOrder = modelSortOrder === 'desc' ? 'asc' : 'desc';
+    } else {
+        modelSortField = field;
+        modelSortOrder = 'desc';
+    }
+    renderCurrentPage();
+}
+
 function renderModelTable(models) {
     return models.map(model => `
         <tr>
             <td class="font-medium">${model.name}</td>
             <td><span class="badge bg-slate-100 text-slate-600">${model.category}</span></td>
             <td>${model.vendor}</td>
+            <td>${formatNumber(model.requestCount || 0)}</td>
             <td class="font-mono text-sm text-slate-500">${model.apiUrl}</td>
             <td>
                 <span class="badge ${model.status === 'active' ? 'badge-success' : 'badge-error'}">
@@ -1936,28 +2223,60 @@ function setModelVendorFilter(vendor) {
 // ==================== 使用日志页面 ====================
 
 function renderUseLogs(container) {
+    // 筛选日志
+    let filteredLogs = useLogs;
+    if (logFilter.startDate) {
+        filteredLogs = filteredLogs.filter(log => log.time >= logFilter.startDate);
+    }
+    if (logFilter.endDate) {
+        filteredLogs = filteredLogs.filter(log => log.time <= logFilter.endDate + ' 23:59:59');
+    }
+    if (logFilter.token) {
+        filteredLogs = filteredLogs.filter(log => log.id.toLowerCase().includes(logFilter.token.toLowerCase()));
+    }
+    if (logFilter.model) {
+        filteredLogs = filteredLogs.filter(log => log.model.toLowerCase().includes(logFilter.model.toLowerCase()));
+    }
+    if (logFilter.user) {
+        filteredLogs = filteredLogs.filter(log => log.user.toLowerCase().includes(logFilter.user.toLowerCase()));
+    }
+
     // 分页计算
-    const totalItems = useLogs.length;
+    const totalItems = filteredLogs.length;
     const totalPages = Math.ceil(totalItems / logsPageSize);
     const startIndex = (logsPage - 1) * logsPageSize;
     const endIndex = Math.min(startIndex + logsPageSize, totalItems);
-    const paginatedLogs = useLogs.slice(startIndex, endIndex);
+    const paginatedLogs = filteredLogs.slice(startIndex, endIndex);
 
     container.innerHTML = `
         <div class="card">
+            <div class="card-body pb-0">
+                <!-- 筛选器 -->
+                <div class="flex items-center gap-4 mb-4 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-slate-500">时间:</span>
+                        <input type="date" class="input text-sm py-1" id="logStartDate" value="${logFilter.startDate}" onchange="filterLogs()">
+                        <span class="text-slate-400">至</span>
+                        <input type="date" class="input text-sm py-1" id="logEndDate" value="${logFilter.endDate}" onchange="filterLogs()">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-slate-500">令牌:</span>
+                        <input type="text" class="input text-sm py-1" id="logTokenFilter" placeholder="搜索令牌ID" value="${logFilter.token}" onchange="filterLogs()">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-slate-500">模型:</span>
+                        <input type="text" class="input text-sm py-1" id="logModelFilter" placeholder="搜索模型" value="${logFilter.model}" oninput="filterLogs()">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-slate-500">用户:</span>
+                        <input type="text" class="input text-sm py-1" id="logUserFilter" placeholder="搜索用户" value="${logFilter.user}" oninput="filterLogs()">
+                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="clearLogFilters()">清除筛选</button>
+                </div>
+            </div>
             <div class="card-header flex items-center justify-between">
                 <span>使用日志</span>
-                <div class="flex items-center gap-2">
-                    <select class="filter-select text-sm">
-                        <option value="">全部模型</option>
-                        ${MODELS.map(m => `<option value="${m.name}">${m.name}</option>`).join('')}
-                    </select>
-                    <select class="filter-select text-sm">
-                        <option value="">全部状态</option>
-                        <option value="success">成功</option>
-                        <option value="failed">失败</option>
-                    </select>
-                </div>
+                <span class="text-sm text-slate-500">共 ${totalItems} 条记录</span>
             </div>
             <div class="table-container">
                 <table class="table">
@@ -1969,6 +2288,8 @@ function renderUseLogs(container) {
                             <th>用户</th>
                             <th>模型</th>
                             <th>用时</th>
+                            <th>提示(输入)</th>
+                            <th>补全(输出)</th>
                             <th>消耗TOKEN</th>
                         </tr>
                     </thead>
@@ -1981,6 +2302,8 @@ function renderUseLogs(container) {
                                 <td>${log.user}</td>
                                 <td><span class="badge bg-slate-100 text-slate-600">${log.model}</span></td>
                                 <td>${log.duration}</td>
+                                <td>${formatNumber(log.promptTokens || 0)}</td>
+                                <td>${formatNumber(log.completionTokens || 0)}</td>
                                 <td>${formatNumber(log.tokens)}</td>
                             </tr>
                         `).join('')}
@@ -2005,6 +2328,30 @@ function renderUseLogs(container) {
             </div>
         </div>
     `;
+}
+
+// 筛选日志
+function filterLogs() {
+    logFilter.startDate = document.getElementById('logStartDate')?.value || '';
+    logFilter.endDate = document.getElementById('logEndDate')?.value || '';
+    logFilter.token = document.getElementById('logTokenFilter')?.value || '';
+    logFilter.model = document.getElementById('logModelFilter')?.value || '';
+    logFilter.user = document.getElementById('logUserFilter')?.value || '';
+    logsPage = 1;
+    renderCurrentPage();
+}
+
+// 清除筛选
+function clearLogFilters() {
+    logFilter = {
+        startDate: '',
+        endDate: '',
+        token: '',
+        model: '',
+        user: ''
+    };
+    logsPage = 1;
+    renderCurrentPage();
 }
 
 function renderLogsPagination(totalPages) {
