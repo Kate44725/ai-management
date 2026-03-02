@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI算力管理平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        error: '#ef4444',
+                        surface: '#f8fafc',
+                        border: '#e2e8f0',
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans SC"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-surface font-sans text-slate-800">
+    <div class="flex h-screen overflow-hidden">
+        <!-- 侧边导航栏 -->
+        <aside id="sidebar" class="w-60 bg-white border-r border-border flex flex-col transition-all duration-300">
+            <!-- Logo区域 -->
+            <div class="h-16 flex items-center px-5 border-b border-border">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <span class="font-semibold text-base text-slate-800">AI算力平台</span>
+                </div>
+            </div>
+
+            <!-- 导航菜单 -->
+            <nav class="flex-1 py-4 px-3 overflow-y-auto">
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#" class="nav-item active" data-page="my-computing">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            <span>我的算力</span>
+                        </a>
+                    </li>
+
+                    <!-- 额度管理 - 可折叠 -->
+                    <li class="nav-group">
+                        <button class="nav-item nav-group-toggle" data-group="quota">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>额度管理</span>
+                            <svg class="w-4 h-4 ml-auto transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <ul class="nav-group-items ml-9 mt-1 space-y-1 hidden">
+                            <li>
+                                <a href="#" class="nav-item sub" data-page="quota-manage">
+                                    <span>我的申请</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="nav-item sub" data-page="quota-requests">
+                                    <span>配额审批</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="nav-item sub" data-page="user-management">
+                                    <span>用户额度</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <a href="#" class="nav-item" data-page="dashboard">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                            </svg>
+                            <span>运营看板</span>
+                        </a>
+                    </li>
+
+                    <li class="admin-only">
+                        <a href="#" class="nav-item" data-page="projects">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                            </svg>
+                            <span>项目管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-page="models">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            <span>模型管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-page="logs">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span>使用日志</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- 用户信息 -->
+            <div class="p-4 border-t border-border">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center">
+                        <span class="text-primary-600 font-medium text-sm">管</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-slate-800 truncate">管理员</p>
+                        <p class="text-xs text-slate-500 truncate">admin@company.com</p>
+                    </div>
+                    <button id="roleToggle" class="p-1.5 hover:bg-slate-100 rounded-lg transition-colors" title="切换角色">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- 顶部状态栏 -->
+            <header class="h-16 bg-white border-b border-border flex items-center justify-between px-6">
+                <h1 id="pageTitle" class="text-lg font-semibold text-slate-800">我的算力</h1>
+                <div class="flex items-center gap-4">
+                    <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 页面内容 -->
+            <main id="mainContent" class="flex-1 overflow-y-auto p-6">
+                <!-- 内容将通过JS动态加载 -->
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast通知容器 -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <!-- Modal模态框 -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div id="modalContent" class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 transform transition-all">
+            <!-- 模态框内容将通过JS动态填充 -->
+        </div>
+    </div>
+
+    <script src="js/data-models.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
