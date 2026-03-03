@@ -50,6 +50,14 @@ function navigateTo(page) {
     renderCurrentPage();
 }
 
+// 跳转到额度管理-我的申请页面
+function navigateToQuotaApply() {
+    navigateTo('quota');
+    setTimeout(() => {
+        switchQuotaTab('apply');
+    }, 0);
+}
+
 function updateNavActive() {
     // 移除所有active状态
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -128,58 +136,104 @@ function renderMyComputing(container) {
     container.innerHTML = `
         <!-- 三个卡片并列 -->
         <div class="grid grid-cols-2 gap-6 mb-6">
-            <!-- 额度卡片（合并额度概览+剩余额度） -->
-            <div class="card">
-                <div class="card-body">
-                    <!-- 剩余额度突出显示 -->
-                    <div class="text-center mb-6">
-                        <div class="text-sm text-slate-500 mb-2">剩余额度</div>
-                        <div class="text-5xl font-bold ${status === 'danger' ? 'text-error' : status === 'warning' ? 'text-warning' : 'text-success'}">${formatNumber(remaining)}</div>
-                        <div class="text-sm text-slate-400">Token</div>
+            <!-- 额度卡片 - 浅色系设计 -->
+            <div class="relative overflow-hidden rounded-2xl bg-white shadow-lg border border-slate-100">
+                <!-- 顶部装饰条 -->
+                <div class="h-1.5 ${status === 'danger' ? 'bg-gradient-to-r from-red-400 to-red-500' : status === 'warning' ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-emerald-400 to-emerald-500'}"></div>
+
+                <div class="p-6">
+                    <!-- 顶部：标题 + 申请按钮 -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 ${status === 'danger' ? 'bg-red-50' : status === 'warning' ? 'bg-amber-50' : 'bg-emerald-50'} rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 ${status === 'danger' ? 'text-red-500' : status === 'warning' ? 'text-amber-500' : 'text-emerald-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <span class="text-slate-600 text-sm font-medium">剩余额度</span>
+                        </div>
+                        <button class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow flex items-center gap-1.5" onclick="navigateToQuotaApply()">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            申请额度
+                        </button>
                     </div>
-                    <!-- 进度条显示总Token和已使用 -->
+
+                    <!-- 中间：大数字展示 -->
                     <div class="mb-4">
-                        <div class="progress-bar h-4">
-                            <div class="progress-fill ${status}" style="width: ${usageRate}%"></div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-5xl font-bold ${status === 'danger' ? 'text-red-600' : status === 'warning' ? 'text-amber-600' : 'text-slate-800'} tracking-tight">${formatNumber(remaining)}</span>
+                            <span class="text-slate-400 text-lg">Token</span>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <div>
-                            <span class="text-slate-500">总Token: </span>
-                            <span class="font-medium">${formatNumber(currentUser.quota)}</span>
+
+                    <!-- 底部：进度条 + 统计 -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-slate-400 text-xs">使用进度</span>
+                            <span class="text-slate-500 text-xs font-medium">${usageRate}%</span>
                         </div>
-                        <div>
-                            <span class="text-slate-500">已使用: </span>
-                            <span class="font-medium text-primary-600">${formatNumber(currentUser.used)}</span>
-                            <span class="text-slate-400"> (${usageRate}%)</span>
+                        <!-- 自定义进度条 -->
+                        <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden mb-4">
+                            <div class="h-full ${status === 'danger' ? 'bg-gradient-to-r from-red-400 to-red-500' : status === 'warning' ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-emerald-400 to-emerald-500'} rounded-full transition-all duration-500 ease-out" style="width: ${usageRate}%"></div>
+                        </div>
+                        <!-- 统计数据 -->
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                            <div>
+                                <span class="text-slate-400 text-xs">总额度</span>
+                                <p class="text-slate-700 text-sm font-semibold">${formatNumber(currentUser.quota)}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-slate-400 text-xs">已使用</span>
+                                <p class="text-slate-700 text-sm font-semibold">${formatNumber(currentUser.used)}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- 项目挂靠卡片 -->
-            <div class="card">
-                <div class="card-header flex items-center justify-between">
-                    <span class="text-sm font-medium text-slate-600">项目挂靠</span>
-                    <button class="btn btn-sm btn-ghost" onclick="showProjectHistory()">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="relative overflow-hidden rounded-2xl bg-white shadow-lg border border-slate-100">
+                <!-- 顶部装饰条 -->
+                <div class="h-1.5 bg-gradient-to-r from-blue-400 to-blue-500"></div>
+
+                <div class="p-6">
+                    <!-- 顶部：标题 + 历史按钮 -->
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                                </svg>
+                            </div>
+                            <span class="text-slate-600 text-sm font-medium">项目挂靠</span>
+                        </div>
+                        <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors" onclick="showProjectHistory()" title="历史记录">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- 项目信息 -->
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center shadow-sm">
+                            <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                             </svg>
                         </div>
-                        <div>
-                            <h3 class="font-semibold text-slate-800">${currentUser.project}</h3>
-                            <p class="text-sm text-slate-500">已挂靠 ${getDaysDiff(currentUser.projectStartDate, new Date().toISOString())} 天</p>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-slate-800 text-lg">${currentUser.project}</h3>
+                            <p class="text-sm text-slate-500">已挂靠 <span class="text-blue-600 font-medium">${getDaysDiff(currentUser.projectStartDate, new Date().toISOString())}</span> 天</p>
                         </div>
                     </div>
-                    <button class="btn btn-secondary btn-sm w-full" onclick="showSwitchProjectModal()">
+
+                    <!-- 切换项目按钮 -->
+                    <button class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow flex items-center justify-center gap-2" onclick="showSwitchProjectModal()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
                         切换项目
                     </button>
                 </div>
@@ -503,7 +557,7 @@ function renderUserManagement(container) {
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                添加用户
+                添加用户额度
             </button>
         </div>
 
@@ -558,7 +612,7 @@ function renderUserManagement(container) {
                                     <td>
                                         <div class="flex items-center gap-2">
                                             <button class="btn btn-sm btn-secondary" onclick="editUserQuota('${user.id}')">编辑</button>
-                                            <button class="btn btn-sm btn-danger" onclick="deleteUser('${user.id}')">删除</button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteUser('${user.id}')">失效</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -760,6 +814,7 @@ let modelDisplayMode = 'distribution'; // 'distribution' or 'trend'
 let dashboardProjectFilter = '';
 let dashboardModelFilter = '';
 let dashboardPersonFilter = '';
+let dashboardDepartmentFilter = '';
 
 function renderDashboard(container) {
     if (dashboardView === 'detail') {
@@ -772,43 +827,50 @@ function renderDashboard(container) {
 
     container.innerHTML = `
         <!-- 看板切换 -->
-        <div class="flex items-center justify-between mb-6">
-            <div class="tabs">
-                <button class="tab ${dashboardView === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchDashboardTab('overview')">算力使用全景看板</button>
-                <button class="tab ${dashboardView === 'detail' ? 'active' : ''}" data-tab="detail" onclick="switchDashboardTab('detail')">用户算力使用明细</button>
-            </div>
-            <div class="flex items-center gap-4">
-                <!-- 项目筛选 -->
-                <select class="filter-select text-sm" id="dashboardProjectFilter" onchange="setDashboardFilter('project', this.value)">
-                    <option value="">全部项目</option>
-                    ${projectUsage.map(p => `<option value="${p.name}" ${dashboardProjectFilter === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}
-                </select>
-                <!-- 模型筛选 -->
-                <select class="filter-select text-sm" id="dashboardModelFilter" onchange="setDashboardFilter('model', this.value)">
-                    <option value="">全部模型</option>
-                    ${modelDistribution.map(m => `<option value="${m.model}" ${dashboardModelFilter === m.model ? 'selected' : ''}>${m.model}</option>`).join('')}
-                </select>
-                <!-- 人员筛选 -->
-                <select class="filter-select text-sm" id="dashboardPersonFilter" onchange="setDashboardFilter('person', this.value)">
-                    <option value="">全部人员</option>
-                    ${userUsage.map(u => `<option value="${u.name}" ${dashboardPersonFilter === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
-                </select>
-                <!-- 时间筛选 -->
-                <div class="flex items-center gap-1">
-                    <input type="date" class="input text-sm py-1" id="customStartDate" value="${customDateRange.start || ''}" onchange="updateCustomDateRange()">
-                    <span class="text-slate-400">至</span>
-                    <input type="date" class="input text-sm py-1" id="customEndDate" value="${customDateRange.end || ''}" onchange="updateCustomDateRange()">
+        <div class="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm py-4 -mx-6 px-6 mb-6 border-b border-slate-200">
+            <div class="flex items-center justify-between">
+                <div class="tabs">
+                    <button class="tab ${dashboardView === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchDashboardTab('overview')">算力使用全景看板</button>
+                    <button class="tab ${dashboardView === 'detail' ? 'active' : ''}" data-tab="detail" onclick="switchDashboardTab('detail')">用户算力使用明细</button>
                 </div>
-                <div class="flex items-center gap-1">
-                    <button class="btn btn-sm ${dashboardTimeRange === '1' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(1)">近1个月</button>
-                    <button class="btn btn-sm ${dashboardTimeRange === '3' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(3)">近3个月</button>
-                    <button class="btn btn-sm ${dashboardTimeRange === '6' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(6)">近6个月</button>
+                <div class="flex items-center gap-4 flex-wrap">
+                    <!-- 部门筛选 -->
+                    <select class="filter-select text-sm" id="dashboardDepartmentFilter" onchange="setDashboardFilter('department', this.value)">
+                        <option value="">全部部门</option>
+                        ${departmentUsage.map(d => `<option value="${d.name}" ${dashboardDepartmentFilter === d.name ? 'selected' : ''}>${d.name}</option>`).join('')}
+                    </select>
+                    <!-- 项目筛选 -->
+                    <select class="filter-select text-sm" id="dashboardProjectFilter" onchange="setDashboardFilter('project', this.value)">
+                        <option value="">全部项目</option>
+                        ${projectUsage.map(p => `<option value="${p.name}" ${dashboardProjectFilter === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}
+                    </select>
+                    <!-- 模型筛选 -->
+                    <select class="filter-select text-sm" id="dashboardModelFilter" onchange="setDashboardFilter('model', this.value)">
+                        <option value="">全部模型</option>
+                        ${modelDistribution.map(m => `<option value="${m.model}" ${dashboardModelFilter === m.model ? 'selected' : ''}>${m.model}</option>`).join('')}
+                    </select>
+                    <!-- 人员筛选 -->
+                    <select class="filter-select text-sm" id="dashboardPersonFilter" onchange="setDashboardFilter('person', this.value)">
+                        <option value="">全部人员</option>
+                        ${userUsage.map(u => `<option value="${u.name}" ${dashboardPersonFilter === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+                    </select>
+                    <!-- 时间筛选 -->
+                    <div class="flex items-center gap-1">
+                        <input type="date" class="input text-sm py-1" id="customStartDate" value="${customDateRange.start || ''}" onchange="updateCustomDateRange()">
+                        <span class="text-slate-400">至</span>
+                        <input type="date" class="input text-sm py-1" id="customEndDate" value="${customDateRange.end || ''}" onchange="updateCustomDateRange()">
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button class="btn btn-sm ${dashboardTimeRange === '1' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(1)">近1个月</button>
+                        <button class="btn btn-sm ${dashboardTimeRange === '3' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(3)">近3个月</button>
+                        <button class="btn btn-sm ${dashboardTimeRange === '6' ? 'btn-primary' : 'btn-secondary'}" onclick="setQuickRange(6)">近6个月</button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- 核心指标 -->
-        <div class="grid grid-cols-5 gap-4 mb-6">
+        <div class="grid grid-cols-6 gap-4 mb-6">
             <div class="metric-card">
                 <div class="metric-label">总Token使用量</div>
                 <div class="metric-value text-lg">${formatNumber(overview.totalUsage)}</div>
@@ -838,6 +900,11 @@ function renderDashboard(container) {
                     </svg>
                     ${overview.usersChange}%
                 </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">TOP1使用部门</div>
+                <div class="metric-value text-lg">${overview.topDepartment.name}</div>
+                <div class="text-xs text-slate-500">占比 ${overview.topDepartment.percentage}%</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">TOP1使用项目</div>
@@ -1084,6 +1151,58 @@ function renderIntegratedDashboard() {
             </div>
         </div>
 
+        <!-- 按部门统计 -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="card">
+                <div class="card-header">部门Token使用排行 (TOP10)</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="deptRankChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header flex items-center justify-between">
+                    <span>部门Token使用明细</span>
+                    <button class="btn btn-sm btn-ghost" onclick="exportDepartmentUsageDetail()" title="导出">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>部门名称</th>
+                                <th>Token使用量</th>
+                                <th>占比</th>
+                                <th>环比变化</th>
+                                <th>活跃用户数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${departmentUsage.slice(0, 10).map((d, i) => `
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td>${d.name}</td>
+                                    <td>${formatNumber(d.usage)}</td>
+                                    <td>${d.percentage}%</td>
+                                    <td>
+                                        <span class="${d.change >= 0 ? 'text-success' : 'text-error'}">
+                                            ${d.change >= 0 ? '+' : ''}${d.change}%
+                                        </span>
+                                    </td>
+                                    <td>${d.users}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- 按项目统计 -->
         <div class="grid grid-cols-2 gap-6 mb-6">
             <div class="card">
@@ -1201,6 +1320,32 @@ function initIntegratedDashboardCharts() {
                     label: 'Token使用量',
                     data: userUsage.slice(0, 10).map(u => u.usage),
                     backgroundColor: chartColors[0],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // 部门排行图表
+    const deptCtx = document.getElementById('deptRankChart');
+    if (deptCtx) {
+        charts.deptRank = new Chart(deptCtx, {
+            type: 'bar',
+            data: {
+                labels: departmentUsage.slice(0, 10).map(d => d.name),
+                datasets: [{
+                    label: 'Token使用量',
+                    data: departmentUsage.slice(0, 10).map(d => d.usage),
+                    backgroundColor: chartColors[2],
                     borderRadius: 4
                 }]
             },
@@ -1709,6 +1854,20 @@ function exportPersonUsageDetail() {
     exportToCSV(headers, rows, '人员Token使用明细');
 }
 
+function exportDepartmentUsageDetail() {
+    const data = departmentUsage;
+    const headers = ['排名', '部门名称', 'Token使用量', '占比', '环比变化', '活跃用户数'];
+    const rows = data.map((item, i) => [
+        i + 1,
+        item.name,
+        item.usage,
+        item.percentage + '%',
+        (item.change >= 0 ? '+' : '') + item.change + '%',
+        item.users
+    ]);
+    exportToCSV(headers, rows, '部门Token使用明细');
+}
+
 // 导出项目Token使用明细
 function exportProjectUsageDetail() {
     const data = projectUsage;
@@ -1842,6 +2001,9 @@ function setDashboardFilter(type, value) {
             break;
         case 'person':
             dashboardPersonFilter = value;
+            break;
+        case 'department':
+            dashboardDepartmentFilter = value;
             break;
     }
     renderCurrentPage();
@@ -2022,17 +2184,13 @@ function renderProjects(container) {
                             <th>项目名称</th>
                             <th>项目负责人</th>
                             <th>所属部门</th>
-                            <th>配额</th>
                             <th>已使用</th>
-                            <th>剩余</th>
-                            <th>成员数</th>
                             <th>状态</th>
                             <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${PROJECTS.map(proj => {
-                            const remaining = proj.quota - proj.used;
                             const rate = calculateUsageRate(proj.used, proj.quota);
                             const statusClass = proj.status === 'active' ? 'badge-success' : proj.status === 'paused' ? 'badge-warning' : 'badge-info';
                             const statusText = proj.status === 'active' ? '进行中' : proj.status === 'paused' ? '已暂停' : '已完成';
@@ -2042,10 +2200,7 @@ function renderProjects(container) {
                                     <td class="font-medium">${proj.name}</td>
                                     <td>${proj.leader || '-'}</td>
                                     <td>${proj.department}</td>
-                                    <td>${formatNumber(proj.quota)}</td>
                                     <td>${formatNumber(proj.used)}</td>
-                                    <td>${formatNumber(remaining)}</td>
-                                    <td>${proj.members}</td>
                                     <td>
                                         <span class="badge ${statusClass}">${statusText}</span>
                                     </td>
@@ -2442,7 +2597,7 @@ function renderBilling(container) {
                         ${currentData.projects.map((proj, i) => `
                             <tr>
                                 <td>${i + 1}</td>
-                                <td class="font-medium">${proj.name}</td>
+                                <td class="font-medium text-primary cursor-pointer hover:underline" onclick="showProjectEmployeeDetail('${proj.name}', ${proj.tokens}, ${currentData.unitPrice})">${proj.name}</td>
                                 <td>${(proj.tokens / 1000000).toFixed(2)}</td>
                                 <td>${proj.percentage}%</td>
                                 <td class="font-medium text-primary">${formatNumber(proj.cost.toFixed(2))}</td>
@@ -2451,6 +2606,18 @@ function renderBilling(container) {
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- 帮助说明 -->
+        <div class="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="text-xl font-medium text-slate-700 mb-2">费用分摊说明</div>
+            <ul class="text-base text-slate-600 space-y-2 list-disc list-inside">
+                <li>个人消耗Token挂靠在项目上。</li>
+                <li>每月的费用为算力租赁费用。</li>
+                <li>按照项目消耗Token占比进行费用分摊。</li>
+                <li>因财经分摊比例最低为0.01%，若海思1个月的费用为1.5亿元，则最低分摊费用为1.5万元。与项目经理商议后，达成最终分摊费用。</li>
+                <li>预计每月20号出上个月的账单。</li>
+            </ul>
         </div>
 
         <!-- 管理员录入按钮 -->
@@ -2471,6 +2638,97 @@ function renderBilling(container) {
 function changeBillingMonth(month) {
     billingMonth = month;
     renderCurrentPage();
+}
+
+// 显示项目员工消耗明细
+function showProjectEmployeeDetail(projectName, projectTokens, unitPrice) {
+    // 模拟项目下的员工消耗数据
+    const employeeData = generateEmployeeUsageByProject(projectName);
+
+    const tableRows = employeeData.map((emp, i) => {
+        const estimatedCost = emp.tokens * unitPrice;
+        return `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${emp.name}</td>
+                <td>${formatNumber(emp.tokens)}</td>
+                <td>${emp.percentage}%</td>
+                <td class="text-primary">${formatNumber(estimatedCost.toFixed(2))}</td>
+            </tr>
+        `;
+    }).join('');
+
+    const content = `
+        <div class="mb-4">
+            <div class="text-lg font-medium text-slate-800 mb-1">${projectName}</div>
+            <div class="text-sm text-slate-500">项目总Token: ${formatNumber(projectTokens)} | 项目费用: ${formatNumber((projectTokens * unitPrice).toFixed(2))}元</div>
+        </div>
+        <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>员工姓名</th>
+                        <th>Token消耗量</th>
+                        <th>占比</th>
+                        <th>预估费用（元）</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    const footer = `
+        <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+    `;
+
+    showModal('项目员工消耗明细', content, footer, 'max-w-2xl');
+}
+
+// 根据项目生成员工消耗数据
+function generateEmployeeUsageByProject(projectName) {
+    // 根据项目名称生成固定的员工数据
+    const projectEmployeeMap = {
+        'AI4DESIGN': [
+            { name: '张工', tokens: 12500000 },
+            { name: '李工', tokens: 9800000 },
+            { name: '王工', tokens: 8200000 },
+            { name: '赵工', tokens: 6500000 },
+            { name: '刘工', tokens: 4800000 }
+        ],
+        '芯片设计': [
+            { name: '陈工', tokens: 15000000 },
+            { name: '杨工', tokens: 11000000 },
+            { name: '周工', tokens: 9000000 },
+            { name: '吴工', tokens: 7000000 }
+        ],
+        '智能验证': [
+            { name: '徐工', tokens: 8000000 },
+            { name: '孙工', tokens: 6500000 },
+            { name: '马工', tokens: 5000000 },
+            { name: '朱工', tokens: 3500000 }
+        ]
+    };
+
+    // 默认员工数据
+    const defaultEmployees = [
+        { name: '员工A', tokens: 0 },
+        { name: '员工B', tokens: 0 },
+        { name: '员工C', tokens: 0 },
+        { name: '员工D', tokens: 0 }
+    ];
+
+    const employees = projectEmployeeMap[projectName] || defaultEmployees;
+
+    // 计算每个员工的占比
+    const totalTokens = employees.reduce((sum, emp) => sum + emp.tokens, 0);
+    return employees.map(emp => ({
+        ...emp,
+        percentage: totalTokens > 0 ? ((emp.tokens / totalTokens) * 100).toFixed(2) : '0.00'
+    }));
 }
 
 // 显示录入账单弹窗
@@ -2617,8 +2875,9 @@ function initModals() {
     });
 }
 
-function showModal(title, content, footer = '') {
+function showModal(title, content, footer = '', width = 'max-w-md') {
     const modal = document.getElementById('modalContent');
+    modal.className = `bg-white rounded-xl shadow-xl w-full ${width} mx-4 transform transition-all`;
     modal.innerHTML = `
         <div class="modal-header">
             <h3 class="modal-title">${title}</h3>
@@ -2646,11 +2905,29 @@ function closeModal() {
 // ==================== 令牌操作 ====================
 
 function showCreateTokenModal() {
+    const modelCheckboxes = MODELS.map(m => `
+        <label class="flex items-center gap-2 py-1.5 px-2 hover:bg-slate-50 rounded cursor-pointer">
+            <input type="checkbox" class="rounded border-slate-300 text-primary-600 focus:ring-primary-500" name="tokenModels" value="${m.id}">
+            <span class="text-sm">${m.name}</span>
+            <span class="text-xs text-slate-400">${m.vendor}</span>
+        </label>
+    `).join('');
+
     const content = `
         <form id="createTokenForm">
             <div class="form-group">
                 <label class="form-label">令牌名称</label>
                 <input type="text" class="form-input" id="tokenName" placeholder="请输入令牌名称" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">额度 (Token)</label>
+                <input type="number" class="form-input" id="tokenQuota" placeholder="请输入额度" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">可用模型</label>
+                <div class="border border-slate-200 rounded-lg max-h-40 overflow-y-auto">
+                    ${modelCheckboxes}
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">过期时间</label>
@@ -2674,9 +2951,11 @@ function showCreateTokenModal() {
 
 function createToken() {
     const name = document.getElementById('tokenName').value.trim();
+    const quota = parseInt(document.getElementById('tokenQuota').value) || 0;
     const expires = document.getElementById('tokenExpires').value;
+    const selectedModels = Array.from(document.querySelectorAll('input[name="tokenModels"]:checked')).map(cb => cb.value);
 
-    if (!name || !expires) {
+    if (!name || !quota || !expires) {
         showToast('error', '创建失败', '请填写完整信息');
         return;
     }
@@ -2684,6 +2963,9 @@ function createToken() {
     const newToken = {
         id: generateId('tok'),
         name: name,
+        quota: quota,
+        used: 0,
+        models: selectedModels,
         key: 'sk-****...****' + Math.random().toString(16).substr(2, 4),
         createdAt: new Date().toISOString().split('T')[0],
         expiresAt: expires,
@@ -3310,14 +3592,12 @@ function showAddUserModal() {
     const content = `
         <form id="addUserForm">
             <div class="form-group">
-                <label class="form-label">姓名</label>
-                <input type="text" class="form-input" id="newUserName" placeholder="请输入姓名" required>
+                <label class="form-label">姓名/工号</label>
+                <input type="text" class="form-input" id="newUserName" placeholder="请输入姓名或工号" required>
             </div>
             <div class="form-group">
                 <label class="form-label">部门</label>
-                <select class="form-input" id="newUserDept" required>
-                    ${DEPARTMENTS.map(d => `<option value="${d.name}">${d.name}</option>`).join('')}
-                </select>
+                <input type="text" class="form-input" id="newUserDept" value="研发部" readonly>
             </div>
             <div class="form-group">
                 <label class="form-label">额度</label>
@@ -3331,7 +3611,7 @@ function showAddUserModal() {
         <button class="btn btn-primary" onclick="addUser()">添加</button>
     `;
 
-    showModal('添加用户', content, footer);
+    showModal('添加用户额度', content, footer);
 }
 
 function addUser() {
