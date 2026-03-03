@@ -107,6 +107,9 @@ function renderCurrentPage() {
         case 'logs':
             renderUseLogs(mainContent);
             break;
+        case 'billing':
+            renderBilling(mainContent);
+            break;
     }
 
     // 添加页面进入动画
@@ -747,6 +750,7 @@ let logFilter = {
     model: '',
     user: ''
 };
+let billingMonth = '202602'; // 默认最新月份
 let modelVendorFilter = '';
 let modelSortField = 'requestCount'; // 默认按调用次数排序
 let modelSortOrder = 'desc'; // 降序
@@ -2371,6 +2375,180 @@ function changeLogsPage(page) {
     if (page < 1 || page > totalPages) return;
     logsPage = page;
     renderCurrentPage();
+}
+
+// ==================== 费用账单页面 ====================
+
+function renderBilling(container) {
+    const monthOptions = Object.keys(billingData).map(m => {
+        const data = billingData[m];
+        return `<option value="${m}" ${billingMonth === m ? 'selected' : ''}>${data.month}</option>`;
+    }).join('');
+
+    const currentData = billingData[billingMonth];
+    const totalCost = currentData.totalTokens * currentData.unitPrice;
+
+    container.innerHTML = `
+        <div class="card">
+            <div class="card-header flex items-center justify-between">
+                <span>费用账单</span>
+                <select class="filter-select text-sm" id="billingMonthSelect" onchange="changeBillingMonth(this.value)">
+                    ${monthOptions}
+                </select>
+            </div>
+        </div>
+
+        <!-- 核心指标 -->
+        <div class="grid grid-cols-3 gap-6 mb-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="text-sm text-slate-500 mb-2">当月费用（元）</div>
+                    <div class="text-3xl font-bold text-primary">${formatNumber(totalCost.toFixed(2))}</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="text-sm text-slate-500 mb-2">当月总Token数</div>
+                    <div class="text-3xl font-bold text-info">${formatNumber(currentData.totalTokens)}</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="text-sm text-slate-500 mb-2">当月Token单价（元/Token）</div>
+                    <div class="text-3xl font-bold text-success">${currentData.unitPrice}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细表格 -->
+        <div class="card">
+            <div class="card-header">
+                <span>项目费用明细</span>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>项目名称</th>
+                            <th>当月Token量</th>
+                            <th>占比</th>
+                            <th>分摊费用（元）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${currentData.projects.map((proj, i) => `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td class="font-medium">${proj.name}</td>
+                                <td>${formatNumber(proj.tokens)}</td>
+                                <td>${proj.percentage}%</td>
+                                <td class="font-medium text-primary">${formatNumber(proj.cost.toFixed(2))}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 管理员录入按钮 -->
+        <div class="mt-4 flex justify-end">
+            <button class="btn btn-primary" onclick="showAddBillingModal()">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                录入账单
+            </button>
+        </div>
+    `;
+}
+
+// 切换月份
+function changeBillingMonth(month) {
+    billingMonth = month;
+    renderCurrentPage();
+}
+
+// 显示录入账单弹窗
+function showAddBillingModal() {
+    const monthOptions = [];
+    const now = new Date(2026, 1, 1); // 从2026年1月开始
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const monthKey = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const monthLabel = `${d.getFullYear()}年${d.getMonth() + 1}月`;
+        monthOptions.push(`<option value="${monthKey}">${monthLabel}</option>`);
+    }
+
+    const projectOptions = projectUsage.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+
+    const content = `
+        <div class="form-group mb-4">
+            <label class="form-label">月份</label>
+            <select class="form-input" id="newBillMonth">
+                ${monthOptions.join('')}
+            </select>
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label">Token单价（元/Token）</label>
+            <input type="number" class="form-input" id="newBillUnitPrice" step="0.0001" value="0.002">
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label">项目Token量（JSON格式）</label>
+            <textarea class="form-input" id="newBillProjects" rows="6" placeholder='[{"name": "项目名", "tokens": 1000000}]'></textarea>
+            <p class="text-xs text-slate-400 mt-1">请按JSON格式输入每个项目的Token量，系统会自动计算占比和费用</p>
+        </div>
+    `;
+
+    const footer = `
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="addBilling()">保存</button>
+    `;
+
+    showModal('录入账单', content, footer);
+}
+
+// 添加账单
+function addBilling() {
+    const month = document.getElementById('newBillMonth').value;
+    const unitPrice = parseFloat(document.getElementById('newBillUnitPrice').value);
+    const projectsJson = document.getElementById('newBillProjects').value;
+
+    try {
+        const projects = JSON.parse(projectsJson);
+        if (!Array.isArray(projects) || projects.length === 0) {
+            showToast('error', '录入失败', '请输入有效的项目数据');
+            return;
+        }
+
+        const totalTokens = projects.reduce((sum, p) => sum + (p.tokens || 0), 0);
+
+        const projectsData = projects.map(p => {
+            const tokens = p.tokens || 0;
+            const percentage = ((tokens / totalTokens) * 100).toFixed(1);
+            const cost = (tokens * unitPrice).toFixed(2);
+            return {
+                name: p.name,
+                tokens: tokens,
+                percentage: parseFloat(percentage),
+                cost: parseFloat(cost)
+            };
+        });
+
+        billingData[month] = {
+            month: `${month.slice(0, 4)}年${parseInt(month.slice(4))}月`,
+            totalTokens: totalTokens,
+            unitPrice: unitPrice,
+            projects: projectsData
+        };
+
+        billingMonth = month;
+        closeModal();
+        renderCurrentPage();
+        showToast('success', '录入成功', '账单已保存');
+    } catch (e) {
+        showToast('error', '录入失败', '请检查JSON格式是否正确');
+    }
 }
 
 // 复制到剪贴板

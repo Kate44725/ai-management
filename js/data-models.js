@@ -248,6 +248,36 @@ const useLogs = [
     { id: 'log-010', time: '2025-02-27 13:45:08', user: '孙莉', project: 'AI4DESIGN', model: 'GLM4.7', duration: '2.0s', promptTokens: 5000, completionTokens: 2800, tokens: 7800, status: 'success' }
 ];
 
+// 费用账单数据
+const billingData = {
+    '202601': {
+        month: '2026年1月',
+        totalTokens: 5200000,
+        unitPrice: 0.002, // 每Token单价（元）
+        projects: [
+            { name: 'AI4DESIGN', tokens: 1850000, percentage: 35.6, cost: 3700.00 },
+            { name: '智能验证引擎', tokens: 1240000, percentage: 23.8, cost: 2480.00 },
+            { name: '芯片自动化设计', tokens: 890000, percentage: 17.1, cost: 1780.00 },
+            { name: '封装AI优化', tokens: 520000, percentage: 10.0, cost: 1040.00 },
+            { name: '生产预测模型', tokens: 380000, percentage: 7.3, cost: 760.00 },
+            { name: '智能测试系统', tokens: 320000, percentage: 6.2, cost: 640.00 }
+        ]
+    },
+    '202602': {
+        month: '2026年2月',
+        totalTokens: 4850000,
+        unitPrice: 0.002,
+        projects: [
+            { name: 'AI4DESIGN', tokens: 1680000, percentage: 34.6, cost: 3360.00 },
+            { name: '智能验证引擎', tokens: 1150000, percentage: 23.7, cost: 2300.00 },
+            { name: '芯片自动化设计', tokens: 820000, percentage: 16.9, cost: 1640.00 },
+            { name: '封装AI优化', tokens: 480000, percentage: 9.9, cost: 960.00 },
+            { name: '生产预测模型', tokens: 400000, percentage: 8.2, cost: 800.00 },
+            { name: '智能测试系统', tokens: 320000, percentage: 6.6, cost: 640.00 }
+        ]
+    }
+};
+
 // ==================== 工具函数 ====================
 
 // 格式化数字（千分位）
