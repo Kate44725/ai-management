@@ -553,11 +553,11 @@ function renderUserManagement(container) {
                 </button>
                 <span id="selectedCount" class="text-sm text-slate-500" style="display: none;">已选择 <span id="selectedNum">0</span> 项</span>
             </div>
-            <button class="btn btn-primary" onclick="showAddUserModal()">
+            <button class="btn btn-primary" onclick="showBatchAddUserModal()">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                添加用户额度
+                批量添加用户
             </button>
         </div>
 
@@ -3612,6 +3612,86 @@ function showAddUserModal() {
     `;
 
     showModal('添加用户额度', content, footer);
+}
+
+function showBatchAddUserModal() {
+    const content = `
+        <form id="batchAddUserForm">
+            <div class="form-group">
+                <label class="form-label">批量输入工号</label>
+                <textarea class="form-input" id="batchUserIds" rows="8" placeholder="请输入工号，每行一个&#10;例如：&#10;10001&#10;10002&#10;10003"></textarea>
+                <p class="text-sm text-slate-500 mt-1">支持批量输入工号，每行一个</p>
+            </div>
+            <div class="form-group">
+                <label class="form-label">项目</label>
+                <select class="form-input" id="batchUserProject">
+                    <option value="-">无项目</option>
+                    ${PROJECTS.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">额度</label>
+                <input type="number" class="form-input" id="batchUserQuota" placeholder="请输入统一额度" required>
+            </div>
+        </form>
+    `;
+
+    const footer = `
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="batchAddUsers()">批量添加</button>
+    `;
+
+    showModal('批量添加用户', content, footer);
+}
+
+function batchAddUsers() {
+    const userIdsText = document.getElementById('batchUserIds').value.trim();
+    const project = document.getElementById('batchUserProject').value;
+    const quota = parseInt(document.getElementById('batchUserQuota').value);
+
+    if (!userIdsText) {
+        showToast('error', '添加失败', '请输入工号');
+        return;
+    }
+
+    if (!quota || quota <= 0) {
+        showToast('error', '添加失败', '请输入有效额度');
+        return;
+    }
+
+    const userIds = userIdsText.split('\n').map(id => id.trim()).filter(id => id);
+    const addedUsers = [];
+    const existingUsers = [];
+
+    userIds.forEach(userId => {
+        const existing = USERS.find(u => u.id === userId || u.name === userId);
+        if (existing) {
+            existingUsers.push(userId);
+        } else {
+            const newUser = {
+                id: userId,
+                name: userId,
+                department: '-',
+                quota: quota,
+                used: 0,
+                project: project,
+                email: `${userId}@company.com`
+            };
+            USERS.unshift(newUser);
+            addedUsers.push(userId);
+        }
+    });
+
+    closeModal();
+    renderCurrentPage();
+
+    if (addedUsers.length > 0 && existingUsers.length > 0) {
+        showToast('warning', '部分添加成功', `成功添加 ${addedUsers.length} 人，${existingUsers.length} 人已存在`);
+    } else if (addedUsers.length > 0) {
+        showToast('success', '添加成功', `成功添加 ${addedUsers.length} 名用户`);
+    } else {
+        showToast('error', '添加失败', '所输入的工号已全部存在');
+    }
 }
 
 function addUser() {
