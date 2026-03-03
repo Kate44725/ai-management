@@ -2182,7 +2182,7 @@ function renderProjects(container) {
                         <tr>
                             <th>项目编码</th>
                             <th>项目名称</th>
-                            <th>项目负责人</th>
+                            <th>项目经理</th>
                             <th>所属部门</th>
                             <th>已使用</th>
                             <th>状态</th>
@@ -3205,8 +3205,8 @@ function showAddProjectModal() {
                 <input type="text" class="form-input" id="projectName" placeholder="请输入项目名称" required>
             </div>
             <div class="form-group">
-                <label class="form-label">项目负责人</label>
-                <input type="text" class="form-input" id="projectLeader" placeholder="请输入项目负责人" required>
+                <label class="form-label">项目经理</label>
+                <input type="text" class="form-input" id="projectLeader" placeholder="请输入项目经理" required>
             </div>
             <div class="form-group">
                 <label class="form-label">所属部门</label>
@@ -3275,7 +3275,7 @@ function editProject(id) {
                 <input type="text" class="form-input" id="editProjectName" value="${project.name}" required>
             </div>
             <div class="form-group">
-                <label class="form-label">项目负责人</label>
+                <label class="form-label">项目经理</label>
                 <input type="text" class="form-input" id="editProjectLeader" value="${project.leader || ''}" required>
             </div>
             <div class="form-group">
@@ -3366,7 +3366,7 @@ function showApplyQuotaModal() {
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label">项目负责人</label>
+                <label class="form-label">项目经理</label>
                 <input type="text" class="form-input" id="applyProjectLeader" placeholder="选择项目后自动带出" readonly>
             </div>
             <div class="form-group">
