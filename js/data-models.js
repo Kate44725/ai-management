@@ -278,6 +278,48 @@ const billingData = {
     }
 };
 
+// 操作日志数据
+let operationLogs = [
+    { id: 'log-001', time: '2026-03-03 10:30:25', user: 'admin', action: 'add', target: '用户', detail: '添加用户: 10001', ip: '192.168.1.100' },
+    { id: 'log-002', time: '2026-03-03 10:28:15', user: 'admin', action: 'edit', target: '项目', detail: '修改项目: AI4DESIGN', ip: '192.168.1.100' },
+    { id: 'log-003', time: '2026-03-03 10:25:00', user: 'admin', action: 'delete', target: '用户', detail: '删除用户: testuser', ip: '192.168.1.100' },
+    { id: 'log-004', time: '2026-03-03 10:20:30', user: 'admin', action: 'approve', target: '额度申请', detail: '批准用户张三的额度申请', ip: '192.168.1.100' },
+    { id: 'log-005', time: '2026-03-03 10:15:45', user: 'admin', action: 'add', target: '账单', detail: '录入2026年2月账单', ip: '192.168.1.100' },
+    { id: 'log-006', time: '2026-03-03 10:10:20', user: 'admin', action: 'edit', target: '令牌', detail: '修改令牌: dev-token', ip: '192.168.1.100' },
+    { id: 'log-007', time: '2026-03-03 10:05:10', user: 'admin', action: 'add', target: '项目', detail: '创建项目: 新AI项目', ip: '192.168.1.100' },
+    { id: 'log-008', time: '2026-03-03 09:55:30', user: 'admin', action: 'batch', target: '用户额度', detail: '批量调整5名用户额度', ip: '192.168.1.100' },
+    { id: 'log-009', time: '2026-03-03 09:50:15', user: 'admin', action: 'delete', target: '令牌', detail: '吊销令牌: test-api-key', ip: '192.168.1.100' },
+    { id: 'log-010', time: '2026-03-03 09:45:00', user: 'admin', action: 'add', target: '项目成员', detail: '添加成员李四到项目: AI4DESIGN', ip: '192.168.1.100' }
+];
+
+// 记录操作日志
+function logOperation(action, target, detail) {
+    const log = {
+        id: `log-${Date.now()}`,
+        time: new Date().toLocaleString('zh-CN'),
+        user: currentUser.name || 'admin',
+        action: action,
+        target: target,
+        detail: detail,
+        ip: '192.168.1.100'
+    };
+    operationLogs.unshift(log);
+}
+
+// 获取操作类型显示
+function getActionType(action) {
+    const types = {
+        'add': { text: '新增', class: 'badge-success' },
+        'edit': { text: '修改', class: 'badge-warning' },
+        'delete': { text: '删除', class: 'badge-error' },
+        'approve': { text: '审批', class: 'badge-info' },
+        'reject': { text: '拒绝', class: 'badge-error' },
+        'batch': { text: '批量操作', class: 'badge-info' },
+        'revoke': { text: '吊销', class: 'badge-error' }
+    };
+    return types[action] || { text: action, class: 'badge' };
+}
+
 // ==================== 工具函数 ====================
 
 // 格式化数字（千分位）

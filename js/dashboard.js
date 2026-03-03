@@ -84,7 +84,8 @@ function updatePageTitle() {
         'projects': '项目管理',
         'models': '模型管理',
         'logs': '使用日志',
-        'billing': '费用账单'
+        'billing': '费用账单',
+        'operation-logs': '操作日志'
     };
     document.getElementById('pageTitle').textContent = titles[currentPage] || 'AI算力管理平台';
 }
@@ -118,6 +119,9 @@ function renderCurrentPage() {
             break;
         case 'billing':
             renderBilling(mainContent);
+            break;
+        case 'operation-logs':
+            renderOperationLogs(mainContent);
             break;
     }
 
@@ -2640,6 +2644,109 @@ function changeBillingMonth(month) {
     renderCurrentPage();
 }
 
+// ==================== 操作日志页面 ====================
+
+// 操作日志筛选状态
+let operationLogFilters = {
+    action: '',
+    target: '',
+    keyword: ''
+};
+
+function renderOperationLogs(container) {
+    // 筛选日志
+    let filteredLogs = operationLogs;
+
+    if (operationLogFilters.action) {
+        filteredLogs = filteredLogs.filter(log => log.action === operationLogFilters.action);
+    }
+
+    if (operationLogFilters.target) {
+        filteredLogs = filteredLogs.filter(log => log.target === operationLogFilters.target);
+    }
+
+    if (operationLogFilters.keyword) {
+        const keyword = operationLogFilters.keyword.toLowerCase();
+        filteredLogs = filteredLogs.filter(log =>
+            log.detail.toLowerCase().includes(keyword) ||
+            log.user.toLowerCase().includes(keyword)
+        );
+    }
+
+    // 获取唯一的操作类型和目标类型
+    const actionTypes = [...new Set(operationLogs.map(l => l.action))];
+    const targetTypes = [...new Set(operationLogs.map(l => l.target))];
+
+    container.innerHTML = `
+        <div class="card">
+            <div class="card-header flex items-center justify-between flex-wrap gap-4">
+                <span>操作日志</span>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <select class="filter-select text-sm" onchange="filterOperationLogs('action', this.value)">
+                        <option value="">全部操作类型</option>
+                        ${actionTypes.map(a => `<option value="${a}" ${operationLogFilters.action === a ? 'selected' : ''}>${getActionType(a).text}</option>`).join('')}
+                    </select>
+                    <select class="filter-select text-sm" onchange="filterOperationLogs('target', this.value)">
+                        <option value="">全部操作对象</option>
+                        ${targetTypes.map(t => `<option value="${t}" ${operationLogFilters.target === t ? 'selected' : ''}>${t}</option>`).join('')}
+                    </select>
+                    <input type="text" class="form-input text-sm" placeholder="搜索操作人/详情..." value="${operationLogFilters.keyword}" oninput="filterOperationLogs('keyword', this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>操作时间</th>
+                            <th>操作人</th>
+                            <th>操作类型</th>
+                            <th>操作对象</th>
+                            <th>操作详情</th>
+                            <th>IP地址</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredLogs.length === 0 ? `
+                            <tr>
+                                <td colspan="6" class="text-center text-slate-500 py-8">暂无操作日志</td>
+                            </tr>
+                        ` : filteredLogs.map(log => {
+                            const actionType = getActionType(log.action);
+                            return `
+                                <tr>
+                                    <td>${log.time}</td>
+                                    <td>${log.user}</td>
+                                    <td><span class="badge ${actionType.class}">${actionType.text}</span></td>
+                                    <td>${log.target}</td>
+                                    <td>${log.detail}</td>
+                                    <td class="text-slate-500">${log.ip}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-4 border-t border-border text-sm text-slate-500">
+                共 ${filteredLogs.length} 条操作记录
+            </div>
+        </div>
+    `;
+}
+
+function filterOperationLogs(type, value) {
+    if (type === 'action') {
+        operationLogFilters.action = value;
+    } else if (type === 'target') {
+        operationLogFilters.target = value;
+    } else if (type === 'keyword') {
+        operationLogFilters.keyword = value;
+    }
+    renderCurrentPage();
+}
+
 // 显示项目员工消耗明细
 function showProjectEmployeeDetail(projectName, projectTokens, unitPrice) {
     // 模拟项目下的员工消耗数据
@@ -2805,6 +2912,7 @@ function addBilling() {
         };
 
         billingMonth = month;
+        logOperation('add', '账单', `录入${month}月账单`);
         closeModal();
         renderCurrentPage();
         showToast('success', '录入成功', '账单已保存');
@@ -2973,6 +3081,7 @@ function createToken() {
     };
 
     tokens.unshift(newToken);
+    logOperation('add', '令牌', `创建令牌: ${name}`);
     closeModal();
     renderCurrentPage();
     showToast('success', '创建成功', '令牌已创建');
@@ -3050,6 +3159,7 @@ function confirmEditToken(id) {
     token.quota = quota;
     token.availableModels = models;
 
+    logOperation('edit', '令牌', `修改令牌: ${name}`);
     closeModal();
     renderCurrentPage();
     showToast('success', '保存成功', '令牌信息已更新');
@@ -3075,6 +3185,8 @@ function confirmToggleTokenStatus(id) {
     if (!token) return;
 
     token.status = token.status === 'revoked' ? 'active' : 'revoked';
+    const action = token.status === 'revoked' ? '禁用' : '启用';
+    logOperation(token.status === 'revoked' ? 'revoke' : 'edit', '令牌', `${action}令牌: ${token.name}`);
 
     closeModal();
     renderCurrentPage();
@@ -3094,9 +3206,11 @@ function deleteToken(id) {
 }
 
 function confirmDeleteToken(id) {
+    const token = tokens.find(t => t.id === id);
     const index = tokens.findIndex(t => t.id === id);
     if (index !== -1) {
         tokens.splice(index, 1);
+        logOperation('delete', '令牌', `删除令牌: ${token.name}`);
         closeModal();
         renderCurrentPage();
         showToast('success', '删除成功', '令牌已删除');
@@ -3119,6 +3233,7 @@ function confirmRevokeToken(id) {
     const token = tokens.find(t => t.id === id);
     if (token) {
         token.status = 'revoked';
+        logOperation('revoke', '令牌', `吊销令牌: ${token.name}`);
         closeModal();
         renderCurrentPage();
         showToast('success', '吊销成功', '令牌已吊销');
@@ -3255,6 +3370,7 @@ function addProject() {
     };
 
     PROJECTS.unshift(newProject);
+    logOperation('add', '项目', `创建项目: ${name}`);
     closeModal();
     renderCurrentPage();
     showToast('success', '添加成功', '项目已添加');
@@ -3304,6 +3420,7 @@ function saveProject(id) {
         project.name = document.getElementById('editProjectName').value;
         project.leader = document.getElementById('editProjectLeader').value.trim();
         project.status = document.getElementById('editProjectStatus').value;
+        logOperation('edit', '项目', `修改项目: ${project.name}`);
         closeModal();
         renderCurrentPage();
         showToast('success', '保存成功', '项目信息已更新');
@@ -3449,6 +3566,7 @@ function approveRequest(id) {
             user.quota += request.amount;
         }
 
+        logOperation('approve', '额度申请', `批准用户 ${request.userName} 的额度申请 ${request.amount} Tokens`);
         renderCurrentPage();
         showToast('success', '审批通过', `已批准用户 ${request.userName} 的额度申请`);
     }
@@ -3479,6 +3597,7 @@ function confirmReject(id) {
         request.processedBy = '管理员';
         request.rejectReason = reason || '管理员拒绝';
 
+        logOperation('reject', '额度申请', `拒绝用户 ${request.userName} 的额度申请`);
         closeModal();
         renderCurrentPage();
         showToast('success', '已拒绝', `已拒绝用户 ${request.userName} 的额度申请`);
@@ -3545,6 +3664,9 @@ function confirmBatchApprove() {
         }
     });
 
+    if (approvedCount > 0) {
+        logOperation('batch', '额度申请', `批量批准${approvedCount}条额度申请`);
+    }
     closeModal();
     renderCurrentPage();
     showToast('success', '批量审批完成', `已批准 ${approvedCount} 条申请`);
@@ -3581,6 +3703,9 @@ function confirmBatchReject() {
         }
     });
 
+    if (rejectedCount > 0) {
+        logOperation('batch', '额度申请', `批量拒绝${rejectedCount}条额度申请`);
+    }
     closeModal();
     renderCurrentPage();
     showToast('success', '批量审批完成', `已拒绝 ${rejectedCount} 条申请`);
@@ -3682,6 +3807,9 @@ function batchAddUsers() {
         }
     });
 
+    if (addedUsers.length > 0) {
+        logOperation('batch', '用户', `批量添加${addedUsers.length}名用户`);
+    }
     closeModal();
     renderCurrentPage();
 
@@ -3715,6 +3843,7 @@ function addUser() {
     };
 
     USERS.unshift(newUser);
+    logOperation('add', '用户', `添加用户: ${name}`);
     closeModal();
     renderCurrentPage();
     showToast('success', '添加成功', `用户 ${name} 已添加`);
@@ -3751,6 +3880,7 @@ function saveUserQuota(userId) {
 
     if (user && newQuota) {
         user.quota = newQuota;
+        logOperation('edit', '用户额度', `修改用户 ${user.name} 额度为 ${newQuota}`);
         closeModal();
         renderCurrentPage();
         showToast('success', '保存成功', '用户额度已更新');
@@ -3770,9 +3900,11 @@ function deleteUser(userId) {
 }
 
 function confirmDeleteUser(userId) {
+    const user = USERS.find(u => u.id === userId);
     const index = USERS.findIndex(u => u.id === userId);
     if (index > -1) {
         USERS.splice(index, 1);
+        logOperation('delete', '用户', `删除用户: ${user.name}`);
         closeModal();
         renderCurrentPage();
         showToast('success', '删除成功', '用户已删除');
