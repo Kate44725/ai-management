@@ -33,13 +33,13 @@ const DEPARTMENTS = [
 
 // 项目列表
 const PROJECTS = [
-    { id: 'proj-001', name: 'AI4DESIGN', department: '芯片设计部', quota: 5000000, used: 1520000, members: 25, status: 'active', startDate: '2024-01-15', leader: '张伟' },
-    { id: 'proj-002', name: '智能验证引擎', department: '验证部', quota: 3000000, used: 890000, members: 15, status: 'active', startDate: '2024-02-01', leader: '李娜' },
-    { id: 'proj-003', name: '芯片自动化设计', department: '研发部', quota: 4000000, used: 2100000, members: 20, status: 'active', startDate: '2024-01-20', leader: '王强' },
-    { id: 'proj-004', name: '封装AI优化', department: '封装部', quota: 2000000, used: 450000, members: 8, status: 'active', startDate: '2024-03-01', leader: '刘洋' },
-    { id: 'proj-005', name: '智能测试系统', department: '测试部', quota: 1500000, used: 980000, members: 12, status: 'paused', startDate: '2024-02-15', leader: '陈静' },
-    { id: 'proj-006', name: '生产预测模型', department: '生产部', quota: 1000000, used: 320000, members: 6, status: 'active', startDate: '2024-04-01', leader: '赵磊' },
-    { id: 'proj-007', name: '产品需求分析', department: '产品部', quota: 800000, used: 150000, members: 5, status: 'completed', startDate: '2024-03-10', leader: '孙莉' }
+    { id: 'proj-001', code: '900001', name: 'AI4DESIGN', department: '芯片设计部', quota: 5000000, used: 1520000, members: 25, status: 'active', startDate: '2024-01-15', leader: '张伟' },
+    { id: 'proj-002', code: '900002', name: '智能验证引擎', department: '验证部', quota: 3000000, used: 890000, members: 15, status: 'active', startDate: '2024-02-01', leader: '李娜' },
+    { id: 'proj-003', code: '900003', name: '芯片自动化设计', department: '研发部', quota: 4000000, used: 2100000, members: 20, status: 'active', startDate: '2024-01-20', leader: '王强' },
+    { id: 'proj-004', code: '900004', name: '封装AI优化', department: '封装部', quota: 2000000, used: 450000, members: 8, status: 'active', startDate: '2024-03-01', leader: '刘洋' },
+    { id: 'proj-005', code: '900005', name: '智能测试系统', department: '测试部', quota: 1500000, used: 980000, members: 12, status: 'paused', startDate: '2024-02-15', leader: '陈静' },
+    { id: 'proj-006', code: '900006', name: '生产预测模型', department: '生产部', quota: 1000000, used: 320000, members: 6, status: 'active', startDate: '2024-04-01', leader: '赵磊' },
+    { id: 'proj-007', code: '900007', name: '产品需求分析', department: '产品部', quota: 800000, used: 150000, members: 5, status: 'completed', startDate: '2024-03-10', leader: '孙莉' }
 ];
 
 // 用户列表

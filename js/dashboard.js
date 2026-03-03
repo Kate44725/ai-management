@@ -75,7 +75,8 @@ function updatePageTitle() {
         'dashboard': '运营看板',
         'projects': '项目管理',
         'models': '模型管理',
-        'logs': '使用日志'
+        'logs': '使用日志',
+        'billing': '费用账单'
     };
     document.getElementById('pageTitle').textContent = titles[currentPage] || 'AI算力管理平台';
 }
@@ -898,7 +899,6 @@ function renderPersonDashboard() {
                                 <th>所属项目</th>
                                 <th>Token使用量</th>
                                 <th>占比</th>
-                                <th>环比变化</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -910,11 +910,6 @@ function renderPersonDashboard() {
                                     <td>${u.project}</td>
                                     <td>${formatNumber(u.usage)}</td>
                                     <td>${u.percentage}%</td>
-                                    <td>
-                                        <span class="${u.change >= 0 ? 'text-success' : 'text-error'}">
-                                            ${u.change >= 0 ? '+' : ''}${u.change}%
-                                        </span>
-                                    </td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -2023,7 +2018,9 @@ function renderProjects(container) {
                 <table class="table">
                     <thead>
                         <tr>
+                            <th>项目编码</th>
                             <th>项目名称</th>
+                            <th>项目负责人</th>
                             <th>所属部门</th>
                             <th>配额</th>
                             <th>已使用</th>
@@ -2041,7 +2038,9 @@ function renderProjects(container) {
                             const statusText = proj.status === 'active' ? '进行中' : proj.status === 'paused' ? '已暂停' : '已完成';
                             return `
                                 <tr>
+                                    <td class="font-medium">${proj.code || '-'}</td>
                                     <td class="font-medium">${proj.name}</td>
+                                    <td>${proj.leader || '-'}</td>
                                     <td>${proj.department}</td>
                                     <td>${formatNumber(proj.quota)}</td>
                                     <td>${formatNumber(proj.used)}</td>
@@ -2386,6 +2385,9 @@ function renderBilling(container) {
     }).join('');
 
     const currentData = billingData[billingMonth];
+    // 转换为百万Token单位
+    const totalTokensInMillion = currentData.totalTokens / 1000000;
+    const unitPriceInMillion = currentData.unitPrice * 1000000;
     const totalCost = currentData.totalTokens * currentData.unitPrice;
 
     container.innerHTML = `
@@ -2408,14 +2410,14 @@ function renderBilling(container) {
             </div>
             <div class="card">
                 <div class="card-body text-center">
-                    <div class="text-sm text-slate-500 mb-2">当月总Token数</div>
-                    <div class="text-3xl font-bold text-info">${formatNumber(currentData.totalTokens)}</div>
+                    <div class="text-sm text-slate-500 mb-2">当月总Token数（百万Token）</div>
+                    <div class="text-3xl font-bold text-info">${totalTokensInMillion.toFixed(2)}</div>
                 </div>
             </div>
             <div class="card">
                 <div class="card-body text-center">
-                    <div class="text-sm text-slate-500 mb-2">当月Token单价（元/Token）</div>
-                    <div class="text-3xl font-bold text-success">${currentData.unitPrice}</div>
+                    <div class="text-sm text-slate-500 mb-2">当月Token单价（元/百万Token）</div>
+                    <div class="text-3xl font-bold text-success">${unitPriceInMillion.toFixed(2)}</div>
                 </div>
             </div>
         </div>
@@ -2431,7 +2433,7 @@ function renderBilling(container) {
                         <tr>
                             <th>排名</th>
                             <th>项目名称</th>
-                            <th>当月Token量</th>
+                            <th>当月Token量（百万）</th>
                             <th>占比</th>
                             <th>分摊费用（元）</th>
                         </tr>
@@ -2441,7 +2443,7 @@ function renderBilling(container) {
                             <tr>
                                 <td>${i + 1}</td>
                                 <td class="font-medium">${proj.name}</td>
-                                <td>${formatNumber(proj.tokens)}</td>
+                                <td>${(proj.tokens / 1000000).toFixed(2)}</td>
                                 <td>${proj.percentage}%</td>
                                 <td class="font-medium text-primary">${formatNumber(proj.cost.toFixed(2))}</td>
                             </tr>
@@ -2452,6 +2454,7 @@ function renderBilling(container) {
         </div>
 
         <!-- 管理员录入按钮 -->
+        ${currentUser.role === 'admin' ? `
         <div class="mt-4 flex justify-end">
             <button class="btn btn-primary" onclick="showAddBillingModal()">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2460,6 +2463,7 @@ function renderBilling(container) {
                 录入账单
             </button>
         </div>
+        ` : ''}
     `;
 }
 
@@ -2911,8 +2915,16 @@ function showAddProjectModal() {
     const content = `
         <form id="addProjectForm">
             <div class="form-group">
+                <label class="form-label">项目编码</label>
+                <input type="text" class="form-input" id="projectCode" placeholder="请输入项目编码" required>
+            </div>
+            <div class="form-group">
                 <label class="form-label">项目名称</label>
                 <input type="text" class="form-input" id="projectName" placeholder="请输入项目名称" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">项目负责人</label>
+                <input type="text" class="form-input" id="projectLeader" placeholder="请输入项目负责人" required>
             </div>
             <div class="form-group">
                 <label class="form-label">所属部门</label>
@@ -2936,18 +2948,22 @@ function showAddProjectModal() {
 }
 
 function addProject() {
+    const code = document.getElementById('projectCode').value.trim();
     const name = document.getElementById('projectName').value.trim();
+    const leader = document.getElementById('projectLeader').value.trim();
     const dept = document.getElementById('projectDept').value;
     const quota = parseInt(document.getElementById('projectQuota').value);
 
-    if (!name || !quota) {
+    if (!code || !name || !leader || !quota) {
         showToast('error', '添加失败', '请填写完整信息');
         return;
     }
 
     const newProject = {
         id: generateId('proj'),
+        code: code,
         name: name,
+        leader: leader,
         department: dept,
         quota: quota,
         used: 0,
@@ -2969,8 +2985,16 @@ function editProject(id) {
     const content = `
         <form id="editProjectForm">
             <div class="form-group">
+                <label class="form-label">项目编码</label>
+                <input type="text" class="form-input" id="editProjectCode" value="${project.code || ''}" required>
+            </div>
+            <div class="form-group">
                 <label class="form-label">项目名称</label>
                 <input type="text" class="form-input" id="editProjectName" value="${project.name}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">项目负责人</label>
+                <input type="text" class="form-input" id="editProjectLeader" value="${project.leader || ''}" required>
             </div>
             <div class="form-group">
                 <label class="form-label">状态</label>
@@ -2994,7 +3018,9 @@ function editProject(id) {
 function saveProject(id) {
     const project = PROJECTS.find(p => p.id === id);
     if (project) {
+        project.code = document.getElementById('editProjectCode').value.trim();
         project.name = document.getElementById('editProjectName').value;
+        project.leader = document.getElementById('editProjectLeader').value.trim();
         project.status = document.getElementById('editProjectStatus').value;
         closeModal();
         renderCurrentPage();
