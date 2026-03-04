@@ -836,6 +836,7 @@ let modelChartView = 'usage'; // 'usage' or 'requests'
 let modelDisplayMode = 'distribution'; // 'distribution' or 'trend'
 let dashboardProjectFilter = '';
 let dashboardModelFilter = '';
+let dashboardSourceFilter = '';
 let dashboardPersonFilter = '';
 let dashboardDepartmentFilter = '';
 
@@ -871,6 +872,11 @@ function renderDashboard(container) {
                     <select class="filter-select text-sm" id="dashboardModelFilter" onchange="setDashboardFilter('model', this.value)">
                         <option value="">全部模型</option>
                         ${modelDistribution.map(m => `<option value="${m.model}" ${dashboardModelFilter === m.model ? 'selected' : ''}>${m.model}</option>`).join('')}
+                    </select>
+                    <!-- 工具来源筛选 -->
+                    <select class="filter-select text-sm" id="dashboardSourceFilter" onchange="setDashboardFilter('source', this.value)">
+                        <option value="">全部工具来源</option>
+                        ${sourceUsage.map(s => `<option value="${s.source}" ${dashboardSourceFilter === s.source ? 'selected' : ''}>${s.source}</option>`).join('')}
                     </select>
                     <!-- 人员筛选 -->
                     <select class="filter-select text-sm" id="dashboardPersonFilter" onchange="setDashboardFilter('person', this.value)">
@@ -1150,6 +1156,7 @@ function renderIntegratedDashboard() {
                                 <th>部门</th>
                                 <th>所属项目</th>
                                 <th>使用模型</th>
+                                <th>工具来源</th>
                                 <th>请求次数</th>
                                 <th>Token使用量</th>
                                 <th>占比</th>
@@ -1163,6 +1170,7 @@ function renderIntegratedDashboard() {
                                     <td>${u.deptLevel5 || u.department || '-'}</td>
                                     <td>${u.project || '-'}</td>
                                     <td>${u.topModel || '-'}</td>
+                                    <td><span class="badge ${getSourceBadgeClass(u.topSource)}">${u.topSource || '-'}</span></td>
                                     <td>${formatNumber(u.requestCount || 0)}</td>
                                     <td>${formatNumber(u.usage)}</td>
                                     <td>${u.percentage}%</td>
@@ -1326,6 +1334,52 @@ function renderIntegratedDashboard() {
                 </div>
             </div>
         </div>
+
+        <!-- 按工具来源统计 -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="card">
+                <div class="card-header">工具Token使用排行 (TOP10)</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="sourceRankChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header flex items-center justify-between">
+                    <span>工具Token使用明细</span>
+                    <button class="btn btn-sm btn-ghost" onclick="exportSourceUsageDetail()" title="导出">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="table-container" style="max-height: 340px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>工具来源</th>
+                                <th>Token使用量</th>
+                                <th>占比</th>
+                                <th>请求次数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sourceUsage.slice(0, 10).map((s, i) => `
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td><span class="badge ${getSourceBadgeClass(s.source)}">${s.source}</span></td>
+                                    <td>${formatNumber(s.usage)}</td>
+                                    <td>${s.percentage}%</td>
+                                    <td>${formatNumber(s.requests)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     `;
 }
 
@@ -1412,6 +1466,32 @@ function initIntegratedDashboardCharts() {
 
     // 模型统一图表（支持切换）
     initModelChart();
+
+    // 工具来源排行图表
+    const sourceCtx = document.getElementById('sourceRankChart');
+    if (sourceCtx) {
+        charts.sourceRank = new Chart(sourceCtx, {
+            type: 'bar',
+            data: {
+                labels: sourceUsage.slice(0, 10).map(s => s.source),
+                datasets: [{
+                    label: 'Token使用量',
+                    data: sourceUsage.slice(0, 10).map(s => s.usage),
+                    backgroundColor: '#2563eb',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    }
 }
 
 function initModelChart() {
@@ -1645,6 +1725,7 @@ function renderDashboardDetail() {
                             ${detailVisibleDepts.includes('deptLevel5') ? '<th>最小部门</th>' : ''}
                             <th>所属项目</th>
                             <th>使用模型</th>
+                            <th>工具来源</th>
                             <th>请求次数</th>
                             <th>Token使用量</th>
                             <th>占比</th>
@@ -1710,6 +1791,7 @@ function renderDetailTable(data, startIndex = 1) {
             ${detailVisibleDepts.includes('deptLevel5') ? `<td>${isUserData ? (item.deptLevel5 || '-') : '-'}</td>` : ''}
             <td>${isUserData ? item.project : item.name}</td>
             <td>${isUserData ? (item.topModel || '-') : '-'}</td>
+            <td>${isUserData ? `<span class="badge ${getSourceBadgeClass(item.topSource)}">${item.topSource || '-'}</span>` : '-'}</td>
             <td>${isUserData ? formatNumber(item.requestCount || 0) : '-'}</td>
             <td>${formatNumber(item.usage)}</td>
             <td>${item.percentage}%</td>
@@ -2021,6 +2103,9 @@ function setDashboardFilter(type, value) {
             break;
         case 'model':
             dashboardModelFilter = value;
+            break;
+        case 'source':
+            dashboardSourceFilter = value;
             break;
         case 'person':
             dashboardPersonFilter = value;
@@ -2441,8 +2526,8 @@ function renderUseLogs(container) {
                         <input type="date" class="input text-sm py-1" id="logEndDate" value="${logFilter.endDate}" onchange="filterLogs()">
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-slate-500">来源:</span>
-                        <input type="text" class="input text-sm py-1" id="logSourceFilter" placeholder="搜索来源" value="${logFilter.source}" oninput="filterLogs()">
+                        <span class="text-sm text-slate-500">工具来源:</span>
+                        <input type="text" class="input text-sm py-1" id="logSourceFilter" placeholder="搜索工具来源" value="${logFilter.source}" oninput="filterLogs()">
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-slate-500">模型:</span>
@@ -2464,7 +2549,7 @@ function renderUseLogs(container) {
                     <thead>
                         <tr>
                             <th>时间</th>
-                            <th>来源</th>
+                            <th>工具来源</th>
                             <th>所属项目</th>
                             <th>用户</th>
                             <th>模型</th>

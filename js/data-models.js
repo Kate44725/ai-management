@@ -102,6 +102,18 @@ const modelDistribution = [
     { model: '其他', vendor: '-', usage: 12680, percentage: 3.8, requests: 500 }
 ];
 
+// 工具来源使用分布
+const sourceUsage = [
+    { source: 'OpenAI API', usage: 125000, percentage: 38.2, requests: 5200 },
+    { source: 'ChatGPT', usage: 85000, percentage: 26.0, requests: 3800 },
+    { source: 'Claude API', usage: 42000, percentage: 12.8, requests: 1800 },
+    { source: '智谱AI', usage: 35000, percentage: 10.7, requests: 1500 },
+    { source: '通义千问', usage: 18000, percentage: 5.5, requests: 800 },
+    { source: 'LLaMA API', usage: 12000, percentage: 3.7, requests: 500 },
+    { source: 'Midjourney', usage: 5800, percentage: 1.8, requests: 200 },
+    { source: '语音识别', usage: 3200, percentage: 1.0, requests: 180 }
+];
+
 // 模型使用趋势数据
 const modelTrendData = {
     labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
@@ -217,16 +229,16 @@ const modelUsage = [
 
 // 运营看板 - 按人员数据
 const userUsage = [
-    { rank: 1, name: '张伟', deptLevel1: '研发体系', deptLevel2: '芯片研发部', deptLevel3: '前端设计组', deptLevel4: 'AI算法组', deptLevel5: '芯片设计部', project: 'AI4DESIGN', usage: 325680, percentage: 6.3, change: 15.2, topModel: 'GLM4.7', requestCount: 1250 },
-    { rank: 2, name: '李娜', deptLevel1: '研发体系', deptLevel2: '验证部', deptLevel3: '功能验证组', deptLevel4: '', deptLevel5: '验证部', project: '智能验证引擎', usage: 312400, percentage: 6.0, change: 8.7, topModel: 'GPT-4', requestCount: 980 },
-    { rank: 3, name: '王强', deptLevel1: '研发体系', deptLevel2: '研发部', deptLevel3: '后端设计组', deptLevel4: '', deptLevel5: '研发部', project: '芯片自动化设计', usage: 289000, percentage: 5.6, change: 12.3, topModel: 'Claude3', requestCount: 856 },
-    { rank: 4, name: '周涛', deptLevel1: '研发体系', deptLevel2: '芯片研发部', deptLevel3: '前端设计组', deptLevel4: 'AI算法组', deptLevel5: '芯片设计部', project: 'AI4DESIGN', usage: 278000, percentage: 5.3, change: 18.5, topModel: 'GLM4.7', requestCount: 820 },
-    { rank: 5, name: '郑浩', deptLevel1: '研发体系', deptLevel2: '研发部', deptLevel3: '后端设计组', deptLevel4: '', deptLevel5: '研发部', project: '芯片自动化设计', usage: 256000, percentage: 4.9, change: 10.2, topModel: 'LLaMA-70B', requestCount: 745 },
-    { rank: 6, name: '赵磊', deptLevel1: '生产体系', deptLevel2: '生产部', deptLevel3: '制造组', deptLevel4: '', deptLevel5: '生产部', project: '生产预测模型', usage: 228000, percentage: 4.4, change: 22.1, topModel: 'Whisper', requestCount: 680 },
-    { rank: 7, name: '刘洋', deptLevel1: '研发体系', deptLevel2: '封装部', deptLevel3: '封装设计组', deptLevel4: '', deptLevel5: '封装部', project: '封装AI优化', usage: 212000, percentage: 4.1, change: -3.5, topModel: 'StableDiffusion', requestCount: 620 },
-    { rank: 8, name: '吴敏', deptLevel1: '研发体系', deptLevel2: '验证部', deptLevel3: '功能验证组', deptLevel4: '', deptLevel5: '验证部', project: '智能验证引擎', usage: 198000, percentage: 3.8, change: 5.8, topModel: 'GPT-4', requestCount: 580 },
-    { rank: 9, name: '陈静', deptLevel1: '研发体系', deptLevel2: '测试部', deptLevel3: '测试一组', deptLevel4: '', deptLevel5: '测试部', project: '智能测试系统', usage: 185000, percentage: 3.6, change: 12.5, topModel: 'Qwen-Max', requestCount: 520 },
-    { rank: 10, name: '孙莉', deptLevel1: '产品体系', deptLevel2: '产品部', deptLevel3: '需求分析组', deptLevel4: '', deptLevel5: '产品部', project: '产品需求分析', usage: 156000, percentage: 3.0, change: -8.2, topModel: 'GLM4.7', requestCount: 450 }
+    { rank: 1, name: '张伟', deptLevel1: '研发体系', deptLevel2: '芯片研发部', deptLevel3: '前端设计组', deptLevel4: 'AI算法组', deptLevel5: '芯片设计部', project: 'AI4DESIGN', usage: 325680, percentage: 6.3, change: 15.2, topModel: 'GLM4.7', topSource: 'OpenAI API', requestCount: 1250 },
+    { rank: 2, name: '李娜', deptLevel1: '研发体系', deptLevel2: '验证部', deptLevel3: '功能验证组', deptLevel4: '', deptLevel5: '验证部', project: '智能验证引擎', usage: 312400, percentage: 6.0, change: 8.7, topModel: 'GPT-4', topSource: 'ChatGPT', requestCount: 980 },
+    { rank: 3, name: '王强', deptLevel1: '研发体系', deptLevel2: '研发部', deptLevel3: '后端设计组', deptLevel4: '', deptLevel5: '研发部', project: '芯片自动化设计', usage: 289000, percentage: 5.6, change: 12.3, topModel: 'Claude3', topSource: 'Claude API', requestCount: 856 },
+    { rank: 4, name: '周涛', deptLevel1: '研发体系', deptLevel2: '芯片研发部', deptLevel3: '前端设计组', deptLevel4: 'AI算法组', deptLevel5: '芯片设计部', project: 'AI4DESIGN', usage: 278000, percentage: 5.3, change: 18.5, topModel: 'GLM4.7', topSource: '智谱AI', requestCount: 820 },
+    { rank: 5, name: '郑浩', deptLevel1: '研发体系', deptLevel2: '研发部', deptLevel3: '后端设计组', deptLevel4: '', deptLevel5: '研发部', project: '芯片自动化设计', usage: 256000, percentage: 4.9, change: 10.2, topModel: 'LLaMA-70B', topSource: 'LLaMA API', requestCount: 745 },
+    { rank: 6, name: '赵磊', deptLevel1: '生产体系', deptLevel2: '生产部', deptLevel3: '制造组', deptLevel4: '', deptLevel5: '生产部', project: '生产预测模型', usage: 228000, percentage: 4.4, change: 22.1, topModel: 'Whisper', topSource: '语音识别', requestCount: 680 },
+    { rank: 7, name: '刘洋', deptLevel1: '研发体系', deptLevel2: '封装部', deptLevel3: '封装设计组', deptLevel4: '', deptLevel5: '封装部', project: '封装AI优化', usage: 212000, percentage: 4.1, change: -3.5, topModel: 'StableDiffusion', topSource: 'Midjourney', requestCount: 620 },
+    { rank: 8, name: '吴敏', deptLevel1: '研发体系', deptLevel2: '验证部', deptLevel3: '功能验证组', deptLevel4: '', deptLevel5: '验证部', project: '智能验证引擎', usage: 198000, percentage: 3.8, change: 5.8, topModel: 'GPT-4', topSource: 'ChatGPT', requestCount: 580 },
+    { rank: 9, name: '陈静', deptLevel1: '研发体系', deptLevel2: '测试部', deptLevel3: '测试一组', deptLevel4: '', deptLevel5: '测试部', project: '智能测试系统', usage: 185000, percentage: 3.6, change: 12.5, topModel: 'Qwen-Max', topSource: '通义千问', requestCount: 520 },
+    { rank: 10, name: '孙莉', deptLevel1: '产品体系', deptLevel2: '产品部', deptLevel3: '需求分析组', deptLevel4: '', deptLevel5: '产品部', project: '产品需求分析', usage: 156000, percentage: 3.0, change: -8.2, topModel: 'GLM4.7', topSource: 'OpenAI API', requestCount: 450 }
 ];
 
 // 项目挂靠历史
