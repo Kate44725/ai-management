@@ -44,29 +44,30 @@ const PROJECTS = [
 
 // 用户列表
 const USERS = [
-    { id: 'user-001', name: '张伟', department: '芯片设计部', quota: 1000000, used: 325680, project: 'AI4DESIGN', email: 'zhangwei@company.com' },
-    { id: 'user-002', name: '李娜', department: '验证部', quota: 800000, used: 512400, project: '智能验证引擎', email: 'lina@company.com' },
-    { id: 'user-003', name: '王强', department: '研发部', quota: 1200000, used: 890000, project: '芯片自动化设计', email: 'wangqiang@company.com' },
-    { id: 'user-004', name: '刘洋', department: '封装部', quota: 600000, used: 234500, project: '封装AI优化', email: 'liuyang@company.com' },
-    { id: 'user-005', name: '陈静', department: '测试部', quota: 500000, used: 456000, project: '智能测试系统', email: 'chenjing@company.com' },
-    { id: 'user-006', name: '赵磊', department: '生产部', quota: 400000, used: 128000, project: '生产预测模型', email: 'zhaolei@company.com' },
-    { id: 'user-007', name: '孙莉', department: '产品部', quota: 350000, used: 89000, project: '产品需求分析', email: 'sunli@company.com' },
-    { id: 'user-008', name: '周涛', department: '芯片设计部', quota: 900000, used: 678000, project: 'AI4DESIGN', email: 'zhoutao@company.com' },
-    { id: 'user-009', name: '吴敏', department: '验证部', quota: 700000, used: 321000, project: '智能验证引擎', email: 'wumin@company.com' },
-    { id: 'user-010', name: '郑浩', department: '研发部', quota: 1000000, used: 756000, project: '芯片自动化设计', email: 'zhenghao@company.com' }
+    { id: 'user-001', name: '张伟', department: '芯片设计部', quota: 1000000, used: 325680, project: 'AI4DESIGN', email: 'zhangwei@company.com', expiresAt: '2026-12-31' },
+    { id: 'user-002', name: '李娜', department: '验证部', quota: 800000, used: 512400, project: '智能验证引擎', email: 'lina@company.com', expiresAt: '2026-06-30' },
+    { id: 'user-003', name: '王强', department: '研发部', quota: 1200000, used: 890000, project: '芯片自动化设计', email: 'wangqiang@company.com', expiresAt: null },
+    { id: 'user-004', name: '刘洋', department: '封装部', quota: 600000, used: 234500, project: '封装AI优化', email: 'liuyang@company.com', expiresAt: '2026-09-30' },
+    { id: 'user-005', name: '陈静', department: '测试部', quota: 500000, used: 456000, project: '智能测试系统', email: 'chenjing@company.com', expiresAt: '2026-12-31' },
+    { id: 'user-006', name: '赵磊', department: '生产部', quota: 400000, used: 128000, project: '生产预测模型', email: 'zhaolei@company.com', expiresAt: null },
+    { id: 'user-007', name: '孙莉', department: '产品部', quota: 350000, used: 89000, project: '产品需求分析', email: 'sunli@company.com', expiresAt: '2026-03-31' },
+    { id: 'user-008', name: '周涛', department: '芯片设计部', quota: 900000, used: 678000, project: 'AI4DESIGN', email: 'zhoutao@company.com', expiresAt: '2026-12-31' },
+    { id: 'user-009', name: '吴敏', department: '验证部', quota: 700000, used: 321000, project: '智能验证引擎', email: 'wumin@company.com', expiresAt: null },
+    { id: 'user-010', name: '郑浩', department: '研发部', quota: 1000000, used: 756000, project: '芯片自动化设计', email: 'zhenghao@company.com', expiresAt: '2026-11-30' }
 ];
 
 // 当前登录用户
 let currentUser = {
     id: 'user-001',
     name: '张伟',
-    role: 'admin', // admin 或 user
+    role: 'admin', // admin, user, project_manager
     department: '芯片设计部',
     quota: 1000000,
     used: 325680,
     project: 'AI4DESIGN',
     projectStartDate: '2024-01-15',
-    email: 'zhangwei@company.com'
+    email: 'zhangwei@company.com',
+    managedProject: '' // 项目经理负责的项目名称
 };
 
 // 令牌列表
@@ -163,6 +164,7 @@ function getDashboardOverview(timeRange, customRange = null) {
         totalUsage: data.usage,
         totalRequests: data.requests,
         activeUsers: data.users,
+        topDepartment: { name: '芯片设计部', percentage: 30.4 },
         topProject: { name: 'AI4DESIGN', percentage: 30.4 },
         topModel: { name: 'GLM4.7', percentage: 35.6 },
         usageChange: days === 7 ? 5.2 : days === 30 ? 12.5 : days === 90 ? 18.3 : 10,
@@ -236,16 +238,16 @@ const projectHistory = [
 
 // 使用日志
 const useLogs = [
-    { id: 'log-001', time: '2025-02-27 14:30:25', user: '张伟', project: 'AI4DESIGN', model: 'GLM4.7', duration: '2.5s', promptTokens: 8500, completionTokens: 4000, tokens: 12500, status: 'success' },
-    { id: 'log-002', time: '2025-02-27 14:25:10', user: '李娜', project: '智能验证引擎', model: 'GPT-4', duration: '1.8s', promptTokens: 5200, completionTokens: 3000, tokens: 8200, status: 'success' },
-    { id: 'log-003', time: '2025-02-27 14:20:55', user: '王强', project: '芯片自动化设计', model: 'Claude3', duration: '3.2s', promptTokens: 2000, completionTokens: 1500, tokens: 3500, status: 'success' },
-    { id: 'log-004', time: '2025-02-27 14:15:30', user: '周涛', project: '封装AI优化', model: 'StableDiffusion', duration: '8.5s', promptTokens: 12000, completionTokens: 3000, tokens: 15000, status: 'success' },
-    { id: 'log-005', time: '2025-02-27 14:10:18', user: '郑浩', project: 'AI4DESIGN', model: 'GLM4.7', duration: '1.2s', promptTokens: 4500, completionTokens: 2300, tokens: 6800, status: 'success' },
-    { id: 'log-006', time: '2025-02-27 14:05:42', user: '赵磊', project: '生产预测模型', model: 'Whisper', duration: '5.0s', promptTokens: 800, completionTokens: 400, tokens: 1200, status: 'success' },
-    { id: 'log-007', time: '2025-02-27 14:00:15', user: '刘洋', project: '智能测试系统', model: 'LLaMA-70B', duration: '4.1s', promptTokens: 6000, completionTokens: 3200, tokens: 9200, status: 'success' },
-    { id: 'log-008', time: '2025-02-27 13:55:30', user: '吴敏', project: '芯片自动化设计', model: 'GPT-4', duration: '2.9s', promptTokens: 10000, completionTokens: 5000, tokens: 15000, status: 'success' },
-    { id: 'log-009', time: '2025-02-27 13:50:22', user: '陈静', project: '产品需求分析', model: 'Qwen-Max', duration: '1.5s', promptTokens: 2800, completionTokens: 1400, tokens: 4200, status: 'failed' },
-    { id: 'log-010', time: '2025-02-27 13:45:08', user: '孙莉', project: 'AI4DESIGN', model: 'GLM4.7', duration: '2.0s', promptTokens: 5000, completionTokens: 2800, tokens: 7800, status: 'success' }
+    { id: 'log-001', time: '2025-02-27 14:30:25', user: '张伟', project: 'AI4DESIGN', model: 'GLM4.7', source: 'OpenAI API', duration: '2.5s', promptTokens: 8500, completionTokens: 4000, tokens: 12500, status: 'success' },
+    { id: 'log-002', time: '2025-02-27 14:25:10', user: '李娜', project: '智能验证引擎', model: 'GPT-4', source: 'ChatGPT', duration: '1.8s', promptTokens: 5200, completionTokens: 3000, tokens: 8200, status: 'success' },
+    { id: 'log-003', time: '2025-02-27 14:20:55', user: '王强', project: '芯片自动化设计', model: 'Claude3', source: 'Claude API', duration: '3.2s', promptTokens: 2000, completionTokens: 1500, tokens: 3500, status: 'success' },
+    { id: 'log-004', time: '2025-02-27 14:15:30', user: '周涛', project: '封装AI优化', model: 'StableDiffusion', source: 'Midjourney', duration: '8.5s', promptTokens: 12000, completionTokens: 3000, tokens: 15000, status: 'success' },
+    { id: 'log-005', time: '2025-02-27 14:10:18', user: '郑浩', project: 'AI4DESIGN', model: 'GLM4.7', source: '智谱AI', duration: '1.2s', promptTokens: 4500, completionTokens: 2300, tokens: 6800, status: 'success' },
+    { id: 'log-006', time: '2025-02-27 14:05:42', user: '赵磊', project: '生产预测模型', model: 'Whisper', source: '语音识别', duration: '5.0s', promptTokens: 800, completionTokens: 400, tokens: 1200, status: 'success' },
+    { id: 'log-007', time: '2025-02-27 14:00:15', user: '刘洋', project: '智能测试系统', model: 'LLaMA-70B', source: 'LLaMA API', duration: '4.1s', promptTokens: 6000, completionTokens: 3200, tokens: 9200, status: 'success' },
+    { id: 'log-008', time: '2025-02-27 13:55:30', user: '吴敏', project: '芯片自动化设计', model: 'GPT-4', source: 'ChatGPT', duration: '2.9s', promptTokens: 10000, completionTokens: 5000, tokens: 15000, status: 'success' },
+    { id: 'log-009', time: '2025-02-27 13:50:22', user: '陈静', project: '产品需求分析', model: 'Qwen-Max', source: '通义千问', duration: '1.5s', promptTokens: 2800, completionTokens: 1400, tokens: 4200, status: 'failed' },
+    { id: 'log-010', time: '2025-02-27 13:45:08', user: '孙莉', project: 'AI4DESIGN', model: 'GLM4.7', source: 'OpenAI API', duration: '2.0s', promptTokens: 5000, completionTokens: 2800, tokens: 7800, status: 'success' }
 ];
 
 // 费用账单数据
@@ -347,6 +349,32 @@ function getUsageStatus(rate) {
     return 'normal';
 }
 
+// 获取失效时间状态
+function getExpiryStatus(expiresAt) {
+    if (!expiresAt) return 'normal';
+    const now = new Date();
+    const expires = new Date(expiresAt);
+    const daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
+    if (daysLeft < 0) return 'expired';
+    if (daysLeft <= 30) return 'expiring';
+    return 'normal';
+}
+
+// 获取来源字段的样式
+function getSourceBadgeClass(source) {
+    const sourceMap = {
+        'OpenAI API': 'bg-blue-100 text-blue-700',
+        'ChatGPT': 'bg-green-100 text-green-700',
+        'Claude API': 'bg-purple-100 text-purple-700',
+        'Midjourney': 'bg-pink-100 text-pink-700',
+        '智谱AI': 'bg-cyan-100 text-cyan-700',
+        '通义千问': 'bg-orange-100 text-orange-700',
+        'LLaMA API': 'bg-indigo-100 text-indigo-700',
+        '语音识别': 'bg-yellow-100 text-yellow-700'
+    };
+    return sourceMap[source] || 'bg-slate-100 text-slate-600';
+}
+
 // 获取令牌状态
 function getTokenStatus(token) {
     if (token.status === 'revoked') return { text: '已吊销', class: 'badge-error' };
@@ -360,12 +388,26 @@ function getTokenStatus(token) {
 
 // 切换用户角色
 function toggleRole() {
-    currentUser.role = currentUser.role === 'admin' ? 'user' : 'admin';
+    // 循环切换: admin -> user -> project_manager -> admin
+    const roles = ['admin', 'user', 'project_manager'];
+    const currentIndex = roles.indexOf(currentUser.role);
+    const nextIndex = (currentIndex + 1) % roles.length;
+    currentUser.role = roles[nextIndex];
+
+    // 设置项目经理负责的项目
+    if (currentUser.role === 'project_manager') {
+        currentUser.managedProject = 'AI4DESIGN'; // 默认负责 AI4DESIGN 项目
+    } else {
+        currentUser.managedProject = '';
+    }
+
     localStorage.setItem('userRole', currentUser.role);
+    localStorage.setItem('managedProject', currentUser.managedProject);
 
     // 更新UI
     updateUIBasedOnRole();
-    showToast('success', '角色切换', `已切换为${currentUser.role === 'admin' ? '管理员' : '普通用户'}身份`);
+    const roleNames = { 'admin': '管理员', 'user': '普通用户', 'project_manager': '项目经理' };
+    showToast('success', '角色切换', `已切换为${roleNames[currentUser.role]}身份`);
 
     // 刷新当前页面
     renderCurrentPage();
@@ -379,6 +421,16 @@ function updateUIBasedOnRole() {
     } else {
         adminElements.forEach(el => el.classList.add('hidden'));
     }
+}
+
+// 检查是否是管理员
+function isAdmin() {
+    return currentUser.role === 'admin';
+}
+
+// 检查是否是项目经理
+function isProjectManager() {
+    return currentUser.role === 'project_manager';
 }
 
 // 生成唯一ID

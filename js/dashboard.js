@@ -4,9 +4,8 @@
  */
 
 // 全局变量
-let currentPage = 'my-computing';
+let currentPage = 'quota';
 let charts = {};
-let quotaSubPage = 'apply'; // 'apply' | 'approve' | 'batch'
 let userQuotaPage = 1;
 let userQuotaPageSize = 10;
 let detailVisibleDepts = ['deptLevel5']; // 默认显示最小部门(五级)
@@ -50,13 +49,6 @@ function navigateTo(page) {
     renderCurrentPage();
 }
 
-// 跳转到额度管理-我的申请页面
-function navigateToQuotaApply() {
-    navigateTo('quota');
-    setTimeout(() => {
-        switchQuotaTab('apply');
-    }, 0);
-}
 
 function updateNavActive() {
     // 移除所有active状态
@@ -78,7 +70,6 @@ function updateNavActive() {
 
 function updatePageTitle() {
     const titles = {
-        'my-computing': '我的算力',
         'quota': '额度管理',
         'dashboard': '运营看板',
         'projects': '项目管理',
@@ -99,9 +90,6 @@ function renderCurrentPage() {
     charts = {};
 
     switch(currentPage) {
-        case 'my-computing':
-            renderMyComputing(mainContent);
-            break;
         case 'quota':
             renderQuota(mainContent);
             break;
@@ -156,12 +144,6 @@ function renderMyComputing(container) {
                             </div>
                             <span class="text-slate-600 text-sm font-medium">剩余额度</span>
                         </div>
-                        <button class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow flex items-center gap-1.5" onclick="navigateToQuotaApply()">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            申请额度
-                        </button>
                     </div>
 
                     <!-- 中间：大数字展示 -->
@@ -317,44 +299,8 @@ function renderTokenTable() {
 // ==================== 额度管理页面（包含三个tab） ====================
 
 function renderQuota(container) {
-    container.innerHTML = `
-        <!-- Tab页签 -->
-        <div class="tabs mb-6">
-            <button class="tab ${quotaSubPage === 'apply' ? 'active' : ''}" data-tab="apply" onclick="switchQuotaTab('apply')">我的申请</button>
-            <button class="tab ${quotaSubPage === 'approve' ? 'active' : ''}" data-tab="approve" onclick="switchQuotaTab('approve')">配额审批</button>
-            <button class="tab ${quotaSubPage === 'batch' ? 'active' : ''}" data-tab="batch" onclick="switchQuotaTab('batch')">批量管理</button>
-        </div>
-
-        <!-- 内容区域 -->
-        <div id="quotaContent"></div>
-    `;
-
-    // 渲染当前tab的内容
-    renderQuotaContent();
-}
-
-function switchQuotaTab(tab) {
-    quotaSubPage = tab;
-    renderQuotaContent();
-
-    // 更新tab激活状态
-    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
-    document.querySelector(`.tabs .tab[data-tab="${tab}"]`).classList.add('active');
-}
-
-function renderQuotaContent() {
-    const content = document.getElementById('quotaContent');
-    switch(quotaSubPage) {
-        case 'apply':
-            renderQuotaManage(content);
-            break;
-        case 'approve':
-            renderQuotaRequests(content);
-            break;
-        case 'batch':
-            renderUserManagement(content);
-            break;
-    }
+    // 直接渲染用户额度管理页面
+    renderUserManagement(container);
 }
 
 // ==================== 额度申请页面 ====================
@@ -534,15 +480,25 @@ function renderQuotaRequests(container) {
 let selectedUsers = []; // 批量选择用户ID
 
 function renderUserManagement(container) {
-    const totalUsers = USERS.length;
+    // 根据角色过滤用户
+    let filteredUsers = USERS;
+    if (currentUser.role === 'project_manager' && currentUser.managedProject) {
+        filteredUsers = USERS.filter(u => u.project === currentUser.managedProject);
+    }
+
+    const totalUsers = filteredUsers.length;
     const totalPages = Math.ceil(totalUsers / userQuotaPageSize);
     const startIndex = (userQuotaPage - 1) * userQuotaPageSize;
     const endIndex = Math.min(startIndex + userQuotaPageSize, totalUsers);
-    const paginatedUsers = USERS.slice(startIndex, endIndex);
+    const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+    // 判断是否显示管理按钮（管理员和项目经理都显示批量操作按钮）
+    const showManagement = currentUser.role === 'admin' || currentUser.role === 'project_manager';
 
     container.innerHTML = `
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
+                ${showManagement ? `
                 <button class="btn btn-secondary" onclick="exportUsers()">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -556,23 +512,36 @@ function renderUserManagement(container) {
                     批量编辑
                 </button>
                 <span id="selectedCount" class="text-sm text-slate-500" style="display: none;">已选择 <span id="selectedNum">0</span> 项</span>
+                ` : ''}
             </div>
+            ${showManagement ? `
             <button class="btn btn-primary" onclick="showBatchAddUserModal()">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
                 批量添加用户
             </button>
+            ` : ''}
         </div>
+
+        ${currentUser.role === 'project_manager' ? `
+        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <span class="text-blue-700">当前查看项目：</span>
+            <span class="font-medium text-blue-800">${currentUser.managedProject}</span>
+            <span class="text-blue-600 ml-2">（共 ${totalUsers} 名成员）</span>
+        </div>
+        ` : ''}
 
         <div class="card">
             <div class="table-container">
                 <table class="table">
                     <thead>
                         <tr>
+                            ${showManagement ? `
                             <th style="width: 40px;">
                                 <input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers()">
                             </th>
+                            ` : ''}
                             <th>用户姓名</th>
                             <th>所属部门</th>
                             <th>所属项目</th>
@@ -580,6 +549,7 @@ function renderUserManagement(container) {
                             <th>已用额度</th>
                             <th>总额度</th>
                             <th>使用率</th>
+                            <th>失效时间</th>
                             <th>状态</th>
                             <th>操作</th>
                         </tr>
@@ -589,11 +559,14 @@ function renderUserManagement(container) {
                             const remaining = user.quota - user.used;
                             const rate = calculateUsageRate(user.used, user.quota);
                             const status = getUsageStatus(rate);
+                            const expiryStatus = getExpiryStatus(user.expiresAt);
                             return `
                                 <tr>
+                                    ${showManagement ? `
                                     <td>
                                         <input type="checkbox" class="user-checkbox" value="${user.id}" onchange="toggleUserSelection('${user.id}')">
                                     </td>
+                                    ` : ''}
                                     <td class="font-medium">${user.name}</td>
                                     <td>${user.department}</td>
                                     <td>${user.project || '-'}</td>
@@ -607,6 +580,13 @@ function renderUserManagement(container) {
                                             </div>
                                             <span class="text-sm">${rate}%</span>
                                         </div>
+                                    </td>
+                                    <td>
+                                        ${user.expiresAt ? `
+                                            <span class="badge ${expiryStatus === 'expired' ? 'badge-error' : expiryStatus === 'expiring' ? 'badge-warning' : 'badge-info'}">
+                                                ${expiryStatus === 'expired' ? '已失效' : expiryStatus === 'expiring' ? '即将失效' : user.expiresAt}
+                                            </span>
+                                        ` : '<span class="text-slate-400">永久有效</span>'}
                                     </td>
                                     <td>
                                         <span class="badge ${status === 'danger' ? 'badge-error' : status === 'warning' ? 'badge-warning' : 'badge-success'}">
@@ -660,7 +640,12 @@ function renderUserQuotaPageNumbers(totalPages) {
 
 // 跳转页面
 function goToUserQuotaPage(page) {
-    const totalPages = Math.ceil(USERS.length / userQuotaPageSize);
+    // 根据角色获取过滤后的用户列表
+    let filteredUsers = USERS;
+    if (currentUser.role === 'project_manager' && currentUser.managedProject) {
+        filteredUsers = USERS.filter(u => u.project === currentUser.managedProject);
+    }
+    const totalPages = Math.ceil(filteredUsers.length / userQuotaPageSize);
     if (page < 1 || page > totalPages) return;
     userQuotaPage = page;
     selectedUsers = []; // 清空选择
@@ -739,6 +724,17 @@ function showBatchEditModal() {
             <label class="form-label" id="adjustAmountLabel">新额度 (Token)</label>
             <input type="number" class="form-input" id="batchAdjustAmount" placeholder="请输入额度" min="0">
         </div>
+        <div class="form-group">
+            <label class="form-label">失效时间</label>
+            <div class="flex items-center gap-2">
+                <input type="date" class="form-input" id="batchExpiresAt" placeholder="不修改请留空">
+                <label class="flex items-center gap-1 text-sm text-slate-600">
+                    <input type="checkbox" id="clearExpiresAt">
+                    清除失效时间
+                </label>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">设置失效时间后，用户额度将过期。不设置则保持原值。</p>
+        </div>
     `;
 
     const footer = `
@@ -766,10 +762,25 @@ function toggleBatchAdjustInput() {
 function executeBatchEdit() {
     const type = document.getElementById('batchAdjustType').value;
     const amount = parseInt(document.getElementById('batchAdjustAmount').value);
+    const expiresAtInput = document.getElementById('batchExpiresAt').value;
+    const clearExpiresAt = document.getElementById('clearExpiresAt').checked;
+    const isPM = currentUser.role === 'project_manager';
 
     if (isNaN(amount) || amount < 0) {
         showToast('error', '请输入有效的额度');
         return;
+    }
+
+    // 项目经理权限检查
+    if (isPM) {
+        const invalidUsers = selectedUsers.filter(userId => {
+            const user = USERS.find(u => u.id === userId);
+            return user && user.project !== currentUser.managedProject;
+        });
+        if (invalidUsers.length > 0) {
+            showToast('error', '权限不足', '只能编辑负责项目的用户');
+            return;
+        }
     }
 
     selectedUsers.forEach(userId => {
@@ -781,6 +792,13 @@ function executeBatchEdit() {
                 user.quota += amount;
             } else if (type === 'subtract') {
                 user.quota = Math.max(0, user.quota - amount);
+            }
+
+            // 处理失效时间
+            if (clearExpiresAt) {
+                user.expiresAt = null;
+            } else if (expiresAtInput) {
+                user.expiresAt = expiresAtInput;
             }
         }
     });
@@ -807,7 +825,8 @@ let logFilter = {
     endDate: '',
     token: '',
     model: '',
-    user: ''
+    user: '',
+    source: ''
 };
 let billingMonth = '202602'; // 默认最新月份
 let modelVendorFilter = '';
@@ -2393,8 +2412,8 @@ function renderUseLogs(container) {
     if (logFilter.endDate) {
         filteredLogs = filteredLogs.filter(log => log.time <= logFilter.endDate + ' 23:59:59');
     }
-    if (logFilter.token) {
-        filteredLogs = filteredLogs.filter(log => log.id.toLowerCase().includes(logFilter.token.toLowerCase()));
+    if (logFilter.source) {
+        filteredLogs = filteredLogs.filter(log => log.source.toLowerCase().includes(logFilter.source.toLowerCase()));
     }
     if (logFilter.model) {
         filteredLogs = filteredLogs.filter(log => log.model.toLowerCase().includes(logFilter.model.toLowerCase()));
@@ -2422,8 +2441,8 @@ function renderUseLogs(container) {
                         <input type="date" class="input text-sm py-1" id="logEndDate" value="${logFilter.endDate}" onchange="filterLogs()">
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-slate-500">令牌:</span>
-                        <input type="text" class="input text-sm py-1" id="logTokenFilter" placeholder="搜索令牌ID" value="${logFilter.token}" onchange="filterLogs()">
+                        <span class="text-sm text-slate-500">来源:</span>
+                        <input type="text" class="input text-sm py-1" id="logSourceFilter" placeholder="搜索来源" value="${logFilter.source}" oninput="filterLogs()">
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-slate-500">模型:</span>
@@ -2445,7 +2464,7 @@ function renderUseLogs(container) {
                     <thead>
                         <tr>
                             <th>时间</th>
-                            <th>令牌</th>
+                            <th>来源</th>
                             <th>所属项目</th>
                             <th>用户</th>
                             <th>模型</th>
@@ -2459,7 +2478,7 @@ function renderUseLogs(container) {
                         ${paginatedLogs.map(log => `
                             <tr>
                                 <td class="text-sm text-slate-500">${log.time}</td>
-                                <td>${log.id}</td>
+                                <td><span class="badge ${getSourceBadgeClass(log.source)}">${log.source}</span></td>
                                 <td>${log.project}</td>
                                 <td>${log.user}</td>
                                 <td><span class="badge bg-slate-100 text-slate-600">${log.model}</span></td>
@@ -2496,7 +2515,7 @@ function renderUseLogs(container) {
 function filterLogs() {
     logFilter.startDate = document.getElementById('logStartDate')?.value || '';
     logFilter.endDate = document.getElementById('logEndDate')?.value || '';
-    logFilter.token = document.getElementById('logTokenFilter')?.value || '';
+    logFilter.source = document.getElementById('logSourceFilter')?.value || '';
     logFilter.model = document.getElementById('logModelFilter')?.value || '';
     logFilter.user = document.getElementById('logUserFilter')?.value || '';
     logsPage = 1;
@@ -2508,7 +2527,7 @@ function clearLogFilters() {
     logFilter = {
         startDate: '',
         endDate: '',
-        token: '',
+        source: '',
         model: '',
         user: ''
     };
@@ -3740,6 +3759,19 @@ function showAddUserModal() {
 }
 
 function showBatchAddUserModal() {
+    const isPM = currentUser.role === 'project_manager';
+    const managedProject = currentUser.managedProject;
+
+    const projectSelectHtml = isPM ? `
+        <input type="text" class="form-input" value="${managedProject}" readonly>
+        <p class="text-sm text-slate-500 mt-1">只能添加到负责的项目</p>
+    ` : `
+        <select class="form-input" id="batchUserProject">
+            <option value="-">无项目</option>
+            ${PROJECTS.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+        </select>
+    `;
+
     const content = `
         <form id="batchAddUserForm">
             <div class="form-group">
@@ -3749,14 +3781,16 @@ function showBatchAddUserModal() {
             </div>
             <div class="form-group">
                 <label class="form-label">项目</label>
-                <select class="form-input" id="batchUserProject">
-                    <option value="-">无项目</option>
-                    ${PROJECTS.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
-                </select>
+                ${projectSelectHtml}
             </div>
             <div class="form-group">
                 <label class="form-label">额度</label>
                 <input type="number" class="form-input" id="batchUserQuota" placeholder="请输入统一额度" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">失效时间</label>
+                <input type="date" class="form-input" id="batchUserExpiresAt">
+                <p class="text-sm text-slate-500 mt-1">不填写则永久有效</p>
             </div>
         </form>
     `;
@@ -3771,8 +3805,11 @@ function showBatchAddUserModal() {
 
 function batchAddUsers() {
     const userIdsText = document.getElementById('batchUserIds').value.trim();
-    const project = document.getElementById('batchUserProject').value;
+    const isPM = currentUser.role === 'project_manager';
+    // 项目经理只能添加到自己的项目
+    const project = isPM ? currentUser.managedProject : (document.getElementById('batchUserProject')?.value || '-');
     const quota = parseInt(document.getElementById('batchUserQuota').value);
+    const expiresAt = document.getElementById('batchUserExpiresAt').value || null;
 
     if (!userIdsText) {
         showToast('error', '添加失败', '请输入工号');
@@ -3781,6 +3818,12 @@ function batchAddUsers() {
 
     if (!quota || quota <= 0) {
         showToast('error', '添加失败', '请输入有效额度');
+        return;
+    }
+
+    // 项目经理权限检查
+    if (isPM && project !== currentUser.managedProject) {
+        showToast('error', '权限不足', '只能添加到负责的项目');
         return;
     }
 
@@ -3800,7 +3843,8 @@ function batchAddUsers() {
                 quota: quota,
                 used: 0,
                 project: project,
-                email: `${userId}@company.com`
+                email: `${userId}@company.com`,
+                expiresAt: expiresAt
             };
             USERS.unshift(newUser);
             addedUsers.push(userId);
@@ -3853,6 +3897,12 @@ function editUserQuota(userId) {
     const user = USERS.find(u => u.id === userId);
     if (!user) return;
 
+    // 项目经理权限检查
+    if (currentUser.role === 'project_manager' && user.project !== currentUser.managedProject) {
+        showToast('error', '权限不足', '只能编辑负责项目的用户');
+        return;
+    }
+
     const content = `
         <form id="editUserForm">
             <div class="form-group">
@@ -3862,6 +3912,11 @@ function editUserQuota(userId) {
             <div class="form-group">
                 <label class="form-label">新额度</label>
                 <input type="number" class="form-input" id="editQuota" value="${user.quota}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">失效时间</label>
+                <input type="date" class="form-input" id="editExpiresAt" value="${user.expiresAt || ''}">
+                <p class="text-sm text-slate-500 mt-1">不设置则永久有效</p>
             </div>
         </form>
     `;
@@ -3877,9 +3932,11 @@ function editUserQuota(userId) {
 function saveUserQuota(userId) {
     const user = USERS.find(u => u.id === userId);
     const newQuota = parseInt(document.getElementById('editQuota').value);
+    const expiresAt = document.getElementById('editExpiresAt').value || null;
 
     if (user && newQuota) {
         user.quota = newQuota;
+        user.expiresAt = expiresAt;
         logOperation('edit', '用户额度', `修改用户 ${user.name} 额度为 ${newQuota}`);
         closeModal();
         renderCurrentPage();
