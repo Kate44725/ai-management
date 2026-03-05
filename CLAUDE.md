@@ -42,13 +42,20 @@ python -m http.server 8000
 
 All pages are in `dashboard.html` and switched via JavaScript navigation:
 
-1. **我的算力** - Token usage, project affiliation, token management
-2. **额度管理** - Collapsible menu:
-   - 我的申请 (My Applications)
-   - 配额审批 (Quota Approval - admin only)
-   - 用户额度 (User Quota - admin only)
-3. **运营看板** - Operations dashboard with dimension switching
-4. **项目管理** - Project management (admin only)
+1. **额度管理** - User quota management:
+   - 用户额度 (User Quota - admin/project_manager only)
+2. **运营看板** - Operations dashboard:
+   - 算力使用全景看板 (Overview with source/usage stats)
+   - 用户算力使用明细 (User usage detail)
+3. **项目管理** - Project management (admin only)
+4. **使用日志** - Usage logs with source tracking
+5. **操作日志** - Operation logs (admin only)
+
+### Role System
+
+- **admin**: Full access to all features
+- **project_manager**: Can only view/manage users in their managed project
+- **user**: Basic access (currently same as project_manager view)
 
 ### Data Layer (data-models.js)
 
@@ -56,14 +63,22 @@ Contains all demo data and model functions:
 - `models` - 10 AI models (GLM4.7, GPT-4, Claude3, LLaMA-70B, etc.)
 - `departments` - 10 departments
 - `gpuServers` - 200 GPUs across 20 servers
-- `users`, `projects`, `tokens`, `quotas` - Business entities
+- `users`, `projects`, `tokens`, `sourceUsage` - Business entities
+- `useLogs` - Usage logs with source field
+
+### Key Features
+
+- **User Quota**: Expiry date support, batch add/edit
+- **Source Tracking**: Track tool sources (OpenAI API, ChatGPT, Claude API, etc.)
+- **Project Manager**: Can only manage users in their project
+- **Dashboard**: Tool source usage ranking, multi-dimension filtering
 
 ### UI Components
 
 - **Toast**: 4 types (success/error/warning/info), auto-dismiss 3s
 - **Modal**: Unified modal for forms/confirmations
-- **Charts**: Line charts (trends), donut charts (distribution)
-- **Role Control**: Admin menus hidden for regular users via localStorage
+- **Charts**: Line charts (trends), donut charts (distribution), bar charts (rankings)
+- **Role Control**: Admin/project_manager menus via localStorage
 
 ## Key Patterns
 
