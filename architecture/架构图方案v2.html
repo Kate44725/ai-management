@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI算力管理系统 - 架构方案</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+            letter-spacing: 2px;
+        }
+
+        h1 span {
+            color: #3b82f6;
+        }
+
+        .scheme {
+            margin-bottom: 60px;
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .scheme-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .scheme-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .recommend-tag {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 12px;
+            font-weight: 500;
+        }
+
+        .not-recommend-tag {
+            background: #94a3b8;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 12px;
+            font-weight: 500;
+        }
+
+        .scheme-desc {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .arch-diagram {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            position: relative;
+        }
+
+        .systems-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .system {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 180px;
+            transition: all 0.2s ease;
+        }
+
+        .system:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.1);
+        }
+
+        .system-label {
+            display: inline-block;
+            background: #eff6ff;
+            color: #3b82f6;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .system-label.sys3 {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .system-label.sys2 {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .system-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: #1e293b;
+        }
+
+        .component {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #475569;
+        }
+
+        .component:last-child {
+            margin-bottom: 0;
+        }
+
+        .component strong {
+            color: #1e293b;
+            display: block;
+            margin-bottom: 3px;
+            font-weight: 500;
+        }
+
+        .component.security {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .component.security strong {
+            color: #dc2626;
+        }
+
+        .component.select {
+            background: #fff7ed;
+            border-color: #fed7aa;
+        }
+
+        .component.select strong {
+            color: #ea580c;
+        }
+
+        .component.route {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .component.route strong {
+            color: #16a34a;
+        }
+
+        .arrow-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            margin-bottom: 20px;
+        }
+
+        .arrow-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .arrow-line {
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg, #cbd5e1, #3b82f6, #cbd5e1);
+            position: relative;
+        }
+
+        .arrow-line::after {
+            content: '';
+            position: absolute;
+            right: -4px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #3b82f6;
+        }
+
+        .arrow-label {
+            font-size: 10px;
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        .user-select-box {
+            background: #fff;
+            border: 2px dashed #f59e0b;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        .user-select-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #b45309;
+            margin-bottom: 6px;
+        }
+
+        .user-select-desc {
+            font-size: 11px;
+            color: #92400e;
+        }
+
+        .db-section {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .db-title {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .db-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+        }
+
+        .db-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .db-item {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #475569;
+        }
+
+        .api-section {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 16px;
+        }
+
+        .api-title {
+            font-size: 12px;
+            color: #1d4ed8;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .api-list {
+            font-size: 11px;
+            color: #3b82f6;
+            font-family: 'Monaco', 'Consolas', monospace;
+            line-height: 1.8;
+        }
+
+        .api-list span {
+            color: #64748b;
+            font-family: 'PingFang SC', sans-serif;
+        }
+
+        .flow-steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .flow-step {
+            width: 28px;
+            height: 28px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .flow-step.active {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .feature-list {
+            display: flex;
+            gap: 20px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #475569;
+            background: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .feature-item::before {
+            content: '✓';
+            color: #10b981;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI算力管理系统 <span>架构方案</span></h1>
+
+        <!-- 方案A -->
+        <div class="scheme">
+            <div class="scheme-header">
+                <div class="scheme-title">方案A：系统二中设置默认项目</div>
+                <span class="not-recommend-tag">不推荐</span>
+            </div>
+            <div class="scheme-desc">用户在系统二（AI算力管理系统）设置默认项目，系统三调用API获取</div>
+
+            <div class="arch-diagram">
+                <!-- 第一行：系统 -->
+                <div class="systems-row">
+                    <div class="system">
+                        <div class="system-label">系统三</div>
+                        <div class="system-title">前端 (IDE/工具)</div>
+                        <div class="component">
+                            <strong>开发者使用界面</strong>
+                            调用AI能力的入口
+                        </div>
+                        <div class="component security">
+                            <strong>🔒 前端不接触Key</strong>
+                            安全设计
+                        </div>
+                    </div>
+
+                    <div class="system">
+                        <div class="system-label sys3">系统三</div>
+                        <div class="system-title">后端服务</div>
+                        <div class="component">
+                            <strong>API网关</strong>
+                            接收前端请求
+                        </div>
+                        <div class="component">
+                            <strong>Key代理</strong>
+                            查询用户默认项目
+                        </div>
+                    </div>
+
+                    <div class="system">
+                        <div class="system-label sys2">系统二</div>
+                        <div class="system-title">AI算力管理系统</div>
+                        <div class="component">
+                            <strong>额度管理</strong>
+                            项目经理分配额度
+                        </div>
+                        <div class="component">
+                            <strong>个人中心</strong>
+                            用户设置默认项目
+                        </div>
+                    </div>
+
+                    <div class="system">
+                        <div class="system-label">系统一</div>
+                        <div class="system-title">NEW API</div>
+                        <div class="component">
+                            <strong>API Gateway</strong>
+                            Key验证 & 转发
+                        </div>
+                        <div class="component">
+                            <strong>Token计量</strong>
+                            记录使用量
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 流程箭头 -->
+                <div class="arrow-row">
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">1. 请求AI</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">2. 获取默认项目</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">3. 返回默认项目</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">4. 匹配Key</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">5. 调用API</div>
+                    </div>
+                </div>
+
+                <!-- 数据库 -->
+                <div class="db-section">
+                    <div class="db-title">统一数据库</div>
+                    <div class="db-items">
+                        <div class="db-item">用户表(含默认项目)</div>
+                        <div class="db-item">项目表</div>
+                        <div class="db-item">Key表</div>
+                        <div class="db-item">Token使用记录</div>
+                    </div>
+                </div>
+
+                <div class="flow-steps">
+                    <div class="flow-step active">1</div>
+                    <div class="flow-step active">2</div>
+                    <div class="flow-step active">3</div>
+                    <div class="flow-step active">4</div>
+                    <div class="flow-step active">5</div>
+                    <div class="flow-step active">6</div>
+                </div>
+            </div>
+
+            <div class="feature-list">
+                <div class="feature-item">用户在系统二设置默认项目</div>
+                <div class="feature-item">系统三调用API获取</div>
+                <div class="feature-item">项目经理可帮用户设置</div>
+            </div>
+        </div>
+
+        <!-- 方案B -->
+        <div class="scheme">
+            <div class="scheme-header">
+                <div class="scheme-title">方案B：系统二提供项目列表+Key</div>
+                <span class="recommend-tag">推荐</span>
+            </div>
+            <div class="scheme-desc">系统二统一提供项目列表和Key，默认项目缓存在系统三本地</div>
+
+            <div class="arch-diagram">
+                <!-- 第一行：系统 -->
+                <div class="systems-row">
+                    <div class="system">
+                        <div class="system-label">系统三</div>
+                        <div class="system-title">前端 (IDE/工具)</div>
+                        <div class="component">
+                            <strong>开发者使用界面</strong>
+                            调用AI能力的入口
+                        </div>
+                        <div class="component security">
+                            <strong>🔒 前端不接触Key</strong>
+                            安全设计
+                        </div>
+                    </div>
+
+                    <div class="system">
+                        <div class="system-label sys3">系统三</div>
+                        <div class="system-title">后端服务</div>
+                        <div class="component">
+                            <strong>API网关</strong>
+                            接收前端请求
+                        </div>
+                        <div class="component select">
+                            <strong>用户选择项目</strong>
+                            多项目弹出选择器
+                        </div>
+                        <div class="component route">
+                            <strong>项目路由</strong>
+                            匹配对应Key
+                        </div>
+                    </div>
+
+                    <div class="system">
+                        <div class="system-label sys2">系统二</div>
+                        <div class="system-title">AI算力管理系统</div>
+                        <div class="component">
+                            <strong>额度管理</strong>
+                            项目经理分配额度
+                        </div>
+                        <div class="component">
+                            <strong>API服务</strong>
+                            提供项目+Key列表
+                        </div>
+                    </div>
+
+                    <div class="system">
+                        <div class="system-label">系统一</div>
+                        <div class="system-title">NEW API</div>
+                        <div class="component">
+                            <strong>API Gateway</strong>
+                            Key验证 & 转发
+                        </div>
+                        <div class="component">
+                            <strong>Token计量</strong>
+                            记录使用量
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户选择项目提示 -->
+                <div class="user-select-box">
+                    <div class="user-select-title">👤 用户选择项目</div>
+                    <div class="user-select-desc">多项目用户弹出选择器，单项目用户自动跳过</div>
+                </div>
+
+                <!-- 流程箭头 -->
+                <div class="arrow-row">
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">1. 请求AI</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">2. 获取项目+Key</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">3. 返回Key</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">4. 调用API</div>
+                    </div>
+                </div>
+
+                <!-- 数据库 -->
+                <div class="db-section">
+                    <div class="db-title">统一数据库 (系统二)</div>
+                    <div class="db-items">
+                        <div class="db-item">用户表</div>
+                        <div class="db-item">项目表</div>
+                        <div class="db-item">Key表</div>
+                        <div class="db-item">Token使用记录</div>
+                    </div>
+                </div>
+
+                <!-- API -->
+                <div class="api-section">
+                    <div class="api-title">▎系统二提供API</div>
+                    <div class="api-list">
+                        GET /api/v1/user/projects <span>- 获取用户项目列表+Key</span><br>
+                        GET /api/v1/usage/stats <span>- 获取Token使用统计</span>
+                    </div>
+                </div>
+
+                <div class="flow-steps">
+                    <div class="flow-step active">1</div>
+                    <div class="flow-step active">2</div>
+                    <div class="flow-step active">3</div>
+                    <div class="flow-step active">4</div>
+                    <div class="flow-step active">5</div>
+                </div>
+            </div>
+
+            <div class="feature-list">
+                <div class="feature-item">项目列表统一由系统二提供</div>
+                <div class="feature-item">项目经理可管理用户额度</div>
+                <div class="feature-item">默认项目缓存在系统三</div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
