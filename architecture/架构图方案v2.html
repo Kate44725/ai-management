@@ -613,6 +613,137 @@
             </div>
         </div>
 
+        <!-- 方案C -->
+        <div class="scheme">
+            <div class="scheme-header">
+                <div class="scheme-title">方案C：Token按项目均分结算</div>
+                <span class="recommend-tag">推荐</span>
+            </div>
+            <div class="scheme-desc">用户不限制额度，按实际使用结算。挂靠多个项目时费用均分，项目经理可禁用/启用用户挂靠</div>
+
+            <div class="arch-diagram">
+                <!-- 第一行：系统 -->
+                <div class="systems-row">
+                    <div class="system">
+                        <div class="system-label">系统三</div>
+                        <div class="system-title">前端 (IDE/工具)</div>
+                        <div class="component">
+                            <strong>开发者使用界面</strong>
+                            调用AI能力的入口
+                        </div>
+                        <div class="component security">
+                            <strong>🔒 前端不接触Key</strong>
+                            安全设计
+                        </div>
+                    </div>
+
+                    <div class="system">
+                        <div class="system-label sys3">系统三</div>
+                        <div class="system-title">后端服务</div>
+                        <div class="component">
+                            <strong>API网关</strong>
+                            接收前端请求
+                        </div>
+                        <div class="component select">
+                            <strong>用户选择项目</strong>
+                            挂靠的项目列表
+                        </div>
+                        <div class="component route">
+                            <strong>项目路由</strong>
+                            匹配对应Key
+                        </div>
+                    </div>
+
+                    <div class="system">
+                        <div class="system-label sys2">系统二</div>
+                        <div class="system-title">AI算力管理系统</div>
+                        <div class="component">
+                            <strong>挂靠管理</strong>
+                            项目经理启用/禁用
+                        </div>
+                        <div class="component">
+                            <strong>费用结算</strong>
+                            Token均分至项目
+                        </div>
+                    </div>
+
+                    <div class="system">
+                        <div class="system-label">系统一</div>
+                        <div class="system-title">NEW API</div>
+                        <div class="component">
+                            <strong>API Gateway</strong>
+                            Key验证 & 转发
+                        </div>
+                        <div class="component">
+                            <strong>Token计量</strong>
+                            记录使用量
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户选择项目提示 -->
+                <div class="user-select-box">
+                    <div class="user-select-title">👤 用户选择挂靠项目</div>
+                    <div class="user-select-desc">选择1个或多个项目挂靠，费用均分</div>
+                </div>
+
+                <!-- 流程箭头 -->
+                <div class="arrow-row">
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">1. 请求AI</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">2. 获取挂靠项目</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">3. 返回Key列表</div>
+                    </div>
+                    <div class="arrow-item">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-label">4. 调用API</div>
+                    </div>
+                </div>
+
+                <!-- 数据库 -->
+                <div class="db-section">
+                    <div class="db-title">共享数据库 (系统一和系统二)</div>
+                    <div class="db-items">
+                        <div class="db-item">用户表</div>
+                        <div class="db-item">项目表</div>
+                        <div class="db-item">Key表</div>
+                        <div class="db-item">Token使用记录</div>
+                        <div class="db-item">用户挂靠项目表</div>
+                    </div>
+                </div>
+
+                <!-- 结算说明 -->
+                <div class="api-section">
+                    <div class="api-title">▎费用结算规则</div>
+                    <div class="api-list">
+                        用户Token消耗 ÷ 挂靠项目数 = 每个项目的消耗<br>
+                        <span>例：用户使用1000 tokens，挂靠2个项目，每个项目结算500 tokens</span>
+                    </div>
+                </div>
+
+                <div class="flow-steps">
+                    <div class="flow-step active">1</div>
+                    <div class="flow-step active">2</div>
+                    <div class="flow-step active">3</div>
+                    <div class="flow-step active">4</div>
+                    <div class="flow-step active">5</div>
+                </div>
+            </div>
+
+            <div class="feature-list">
+                <div class="feature-item">用户无额度限制</div>
+                <div class="feature-item">挂靠多项目费用均分</div>
+                <div class="feature-item">项目经理可禁用/启用用户挂靠</div>
+            </div>
+        </div>
+
     </div>
 </body>
 </html>
