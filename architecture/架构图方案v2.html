@@ -644,13 +644,9 @@
                             <strong>API网关</strong>
                             接收前端请求
                         </div>
-                        <div class="component select">
-                            <strong>用户选择项目</strong>
-                            挂靠的项目列表
-                        </div>
-                        <div class="component route">
-                            <strong>项目路由</strong>
-                            匹配对应Key
+                        <div class="component">
+                            <strong>Key获取</strong>
+                            根据用户获取唯一Key
                         </div>
                     </div>
 
@@ -681,12 +677,6 @@
                     </div>
                 </div>
 
-                <!-- 用户选择项目提示 -->
-                <div class="user-select-box">
-                    <div class="user-select-title">👤 用户选择挂靠项目</div>
-                    <div class="user-select-desc">选择1个或多个项目挂靠，费用均分</div>
-                </div>
-
                 <!-- 流程箭头 -->
                 <div class="arrow-row">
                     <div class="arrow-item">
@@ -695,15 +685,11 @@
                     </div>
                     <div class="arrow-item">
                         <div class="arrow-line"></div>
-                        <div class="arrow-label">2. 获取挂靠项目</div>
+                        <div class="arrow-label">2. 获取唯一Key</div>
                     </div>
                     <div class="arrow-item">
                         <div class="arrow-line"></div>
-                        <div class="arrow-label">3. 返回Key列表</div>
-                    </div>
-                    <div class="arrow-item">
-                        <div class="arrow-line"></div>
-                        <div class="arrow-label">4. 调用API</div>
+                        <div class="arrow-label">3. 调用API</div>
                     </div>
                 </div>
 
@@ -732,13 +718,13 @@
                     <div class="flow-step active">1</div>
                     <div class="flow-step active">2</div>
                     <div class="flow-step active">3</div>
-                    <div class="flow-step active">4</div>
-                    <div class="flow-step active">5</div>
                 </div>
             </div>
 
             <div class="feature-list">
                 <div class="feature-item">用户无额度限制</div>
+                <div class="feature-item">用户无感知（无需选择项目）</div>
+                <div class="feature-item">系统根据用户获取唯一Key</div>
                 <div class="feature-item">挂靠多项目费用均分</div>
                 <div class="feature-item">项目经理可禁用/启用用户挂靠</div>
             </div>
