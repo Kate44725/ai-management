@@ -261,16 +261,17 @@
                         <div class="message-line"></div>
                         <div class="message-arrow"></div>
                         <div class="message-label">
-                            2. 请求AI能力<br>
-                            <span class="api">用户ID + 工具类型</span>
+                            2. 返回鉴权Token<br>
+                            <span class="api">{access_token}</span>
                         </div>
                     </div>
                     <div class="message">
                         <div class="message-line"></div>
                         <div class="message-arrow"></div>
                         <div class="message-label">
-                            3. 获取用户Key<br>
-                            <span class="api">GET /api/v1/user/key?user_id=&tool_type=</span>
+                            3. 获取用户+工具Key<br>
+                            <span class="api">GET /api/v1/user/key</span><br>
+                            <span class="api">Auth: Bearer {token}, tool_type: xxx</span>
                         </div>
                     </div>
                     <div class="message">
