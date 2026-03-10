@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -42,86 +42,92 @@
             padding: 30px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
             overflow-x: auto;
-            min-height: 800px;
+            min-height: 700px;
         }
 
         .sequence {
             display: flex;
             position: relative;
-            min-width: 900px;
-            padding: 20px 0;
+            padding-top: 40px;
+            padding-bottom: 40px;
         }
 
         .actor {
-            width: 200px;
-            text-align: center;
-            flex-shrink: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             position: relative;
-            z-index: 2;
         }
 
-        .actor-box {
+        .actor-header {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: #fff;
-            padding: 16px 20px;
-            border-radius: 10px;
+            padding: 12px 24px;
+            border-radius: 8px;
             font-weight: 600;
             font-size: 14px;
+            position: relative;
+            z-index: 2;
+            min-width: 140px;
+            text-align: center;
         }
 
-        .actor-box.sys3 {
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-
-        .actor-box.sys2 {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-        }
-
-        .actor-box.sys1 {
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-        }
+        .actor:nth-child(1) .actor-header { background: linear-gradient(135deg, #10b981, #059669); }
+        .actor:nth-child(2) .actor-header { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .actor:nth-child(3) .actor-header { background: linear-gradient(135deg, #6366f1, #4f46e5); }
 
         .lifeline {
             position: absolute;
-            top: 70px;
-            bottom: 40px;
-            width: 2px;
-            background: linear-gradient(180deg, #3b82f6, #e2e8f0);
+            top: 60px;
+            bottom: 20px;
+            width: 4px;
+            background: linear-gradient(180deg, #3b82f6 0%, #e2e8f0 100%);
+            border-radius: 2px;
         }
 
-        .actor:nth-child(1) .lifeline { left: 100px; }
-        .actor:nth-child(2) .lifeline { left: 300px; }
-        .actor:nth-child(3) .lifeline { left: 500px; }
+        .actor:nth-child(1) .lifeline { background: linear-gradient(180deg, #10b981 0%, #e2e8f0 100%); }
+        .actor:nth-child(2) .lifeline { background: linear-gradient(180deg, #f59e0b 0%, #e2e8f0 100%); }
+        .actor:nth-child(3) .lifeline { background: linear-gradient(180deg, #6366f1 0%, #e2e8f0 100%); }
 
-        .messages {
+        .activations {
             position: absolute;
-            top: 70px;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 60px;
+            bottom: 20px;
+            width: 100%;
+        }
+
+        .activation {
+            position: absolute;
+            width: 60px;
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+            border-left: 2px solid #10b981;
+            border-right: 2px solid #10b981;
+        }
+
+        .actor:nth-child(2) .activation {
+            background: linear-gradient(180deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+            border-color: #f59e0b;
+        }
+
+        .actor:nth-child(3) .activation {
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+            border-color: #6366f1;
         }
 
         .message {
-            display: flex;
-            align-items: center;
-            height: 80px;
-            position: relative;
-        }
-
-        .message-line {
             position: absolute;
             height: 2px;
             background: #3b82f6;
+            display: flex;
+            align-items: center;
         }
 
-        .message:nth-child(odd) .message-line {
-            left: 100px;
-            right: 300px;
+        .message.request {
+            background: #3b82f6;
         }
 
-        .message:nth-child(even) .message-line {
-            left: 300px;
-            right: 100px;
+        .message.response {
             background: #10b981;
         }
 
@@ -132,72 +138,62 @@
             border: 6px solid transparent;
         }
 
-        .message:nth-child(odd) .message-arrow {
-            right: 292px;
-            border-left-color: #3b82f6;
-        }
-
-        .message:nth-child(even) .message-arrow {
-            left: 292px;
-            border-right-color: #10b981;
-        }
-
         .message-label {
             position: absolute;
             background: #fff;
-            padding: 6px 12px;
+            padding: 8px 12px;
             border-radius: 6px;
             font-size: 12px;
             color: #475569;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            z-index: 3;
             white-space: nowrap;
+            border: 1px solid #e2e8f0;
+            top: -30px;
         }
 
-        .message:nth-child(odd) .message-label {
-            left: 20px;
+        .message.request .message-label {
+            left: 0;
         }
 
-        .message:nth-child(even) .message-label {
-            right: 20px;
+        .message.response .message-label {
+            right: 0;
         }
 
         .message .api {
             color: #3b82f6;
             font-family: monospace;
             font-size: 11px;
+            display: block;
+            margin-top: 2px;
         }
 
-        .message:nth-child(even) .api {
+        .message.response .api {
             color: #10b981;
         }
 
-        .note {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-        }
+        /* 消息1: 用户登录 */
+        .msg1 { left: 20%; top: 100px; width: 20%; }
+        .msg1 .message-arrow { right: -6px; border-left-color: #3b82f6; }
 
-        .note-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: #64748b;
-        }
+        /* 消息2: 返回Token */
+        .msg2 { left: 20%; top: 150px; width: 20%; background: #10b981; }
+        .msg2 .message-arrow { left: -6px; border-right-color: #10b981; }
 
-        .note-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
+        /* 消息3: 获取Key */
+        .msg3 { left: 20%; top: 220px; width: 40%; }
+        .msg3 .message-arrow { right: -6px; border-left-color: #3b82f6; }
 
-        .note-dot.request { background: #3b82f6; }
-        .note-dot.response { background: #10b981; }
-        .note-dot.data { background: #6366f1; }
+        /* 消息4: 返回Key */
+        .msg4 { left: 20%; top: 270px; width: 40%; background: #10b981; }
+        .msg4 .message-arrow { left: -6px; border-right-color: #10b981; }
+
+        /* 消息5: 调用AI */
+        .msg5 { left: 20%; top: 340px; width: 60%; }
+        .msg5 .message-arrow { right: -6px; border-left-color: #3b82f6; }
+
+        /* 消息6: 返回AI结果 */
+        .msg6 { left: 20%; top: 390px; width: 60%; background: #10b981; }
+        .msg6 .message-arrow { left: -6px; border-right-color: #10b981; }
 
         .desc {
             margin-top: 30px;
@@ -227,6 +223,16 @@
             font-family: monospace;
             color: #7c3aed;
         }
+
+        .optional-tag {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -235,120 +241,116 @@
 
         <div class="diagram">
             <div class="sequence">
+                <!-- 参与者头部 -->
                 <div class="actor">
-                    <div class="actor-box sys3">SuperIDE/工具</div>
+                    <div class="actor-header">SuperIDE/工具</div>
                     <div class="lifeline"></div>
+                    <div class="activations">
+                        <div class="activation" style="top: 40px; height: 380px;"></div>
+                    </div>
                 </div>
                 <div class="actor">
-                    <div class="actor-box sys2">AI算力管理系统</div>
+                    <div class="actor-header">AI算力管理系统</div>
                     <div class="lifeline"></div>
+                    <div class="activations">
+                        <div class="activation" style="top: 40px; height: 80px;"></div>
+                        <div class="activation" style="top: 160px; height: 140px;"></div>
+                    </div>
                 </div>
                 <div class="actor">
-                    <div class="actor-box sys1">NEW API</div>
+                    <div class="actor-header">NEW API</div>
                     <div class="lifeline"></div>
+                    <div class="activations">
+                        <div class="activation" style="top: 300px; height: 120px;"></div>
+                    </div>
                 </div>
 
-                <div class="messages">
-                    <div class="message">
-                        <div class="message-line"></div>
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            1. 用户登录/鉴权<br>
-                            <span class="api">获取用户Token</span>
-                        </div>
-                    </div>
-                    <div class="message">
-                        <div class="message-line"></div>
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            2. 返回鉴权Token<br>
-                            <span class="api">{access_token}</span>
-                        </div>
-                    </div>
-                    <div class="message">
-                        <div class="message-line"></div>
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            3. 获取用户+工具Key<br>
-                            <span class="api">GET /api/v1/user/key</span><br>
-                            <span class="api">Auth: Bearer {token}, tool_type: xxx</span>
-                        </div>
-                    </div>
-                    <div class="message">
-                        <div class="message-line"></div>
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            4. 返回用户+工具Key<br>
-                            <span class="api">{key_value}</span>
-                        </div>
-                    </div>
-                    <div class="message">
-                        <div class="message-line"></div>
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            5. 调用AI接口<br>
-                            <span class="api">POST /api/v1/chat</span>
-                        </div>
-                    </div>
-                    <div class="message">
-                        <div class="message-line"></div>
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            6. 返回AI结果<br>
-                            <span class="api">{response, token_count}</span>
-                        </div>
-                    </div>
-                    <div class="message">
-                        <div class="message-line"></div>
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            7. (可选) 记录Token使用<br>
-                            <span class="api">写入 token_usage 表</span>
-                        </div>
-                    </div>
-                    <div class="message">
-                        <div class="message-line"></div>
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            8. (可选) 返回结果给用户<br>
-                            <span class="api">{response}</span>
-                        </div>
+                <!-- 消息线 -->
+                <!-- 1. 用户登录 -->
+                <div class="message msg1 request">
+                    <div class="message-arrow"></div>
+                    <div class="message-label">
+                        1. 用户登录/鉴权
+                        <span class="api">获取用户Token</span>
                     </div>
                 </div>
-            </div>
 
-            <div class="note">
-                <div class="note-item">
-                    <div class="note-dot request"></div>
-                    <span>请求</span>
+                <!-- 2. 返回Token -->
+                <div class="message msg2 response">
+                    <div class="message-arrow"></div>
+                    <div class="message-label">
+                        2. 返回鉴权Token
+                        <span class="api">{access_token}</span>
+                    </div>
                 </div>
-                <div class="note-item">
-                    <div class="note-dot response"></div>
-                    <span>响应</span>
+
+                <!-- 3. 获取Key -->
+                <div class="message msg3 request">
+                    <div class="message-arrow"></div>
+                    <div class="message-label">
+                        3. 获取用户+工具Key
+                        <span class="api">GET /api/v1/user/key</span>
+                        <span class="api">Auth: Bearer {token}</span>
+                        <span class="api">tool_type: xxx</span>
+                    </div>
                 </div>
-                <div class="note-item">
-                    <div class="note-dot data"></div>
-                    <span>数据操作</span>
+
+                <!-- 4. 返回Key -->
+                <div class="message msg4 response">
+                    <div class="message-arrow"></div>
+                    <div class="message-label">
+                        4. 返回用户+工具Key
+                        <span class="api">{key_value}</span>
+                    </div>
+                </div>
+
+                <!-- 5. 调用AI -->
+                <div class="message msg5 request">
+                    <div class="message-arrow"></div>
+                    <div class="message-label">
+                        5. 调用AI接口
+                        <span class="api">POST /api/v1/chat</span>
+                        <span class="api">X-API-Key: {key_value}</span>
+                    </div>
+                </div>
+
+                <!-- 6. 返回AI结果 -->
+                <div class="message msg6 response">
+                    <div class="message-arrow"></div>
+                    <div class="message-label">
+                        6. 返回AI结果
+                        <span class="api">{response, token_count}</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="desc">
+            <div class="desc-title">流程说明</div>
+            <div class="desc-list">
+                1. <strong>用户登录</strong>：SuperIDE用户向AI算力管理系统登录鉴权，获取用户Token<br>
+                2. <strong>返回鉴权Token</strong>：AI算力管理系统返回access_token<br>
+                3. <strong>获取Key</strong>：SuperIDE携带鉴权Token和工具类型，请求获取用户+工具的唯一Key<br>
+                4. <strong>返回Key</strong>：AI算力管理系统返回key_value<br>
+                5. <strong>调用AI</strong>：SuperIDE携带Key调用NEW API<br>
+                6. <strong>返回结果</strong>：NEW API返回AI结果和Token使用量
+            </div>
+        </div>
+
+        <div class="desc" style="margin-top: 20px;">
             <div class="desc-title">接口说明</div>
             <div class="desc-list">
-                <strong>API 1: 获取用户Key</strong><br>
-                <code>GET /api/v1/user/key?user_id={user_id}&tool_type={tool_type}</code><br>
-                返回：<code>{key_value: "xxx", projects: [{project_id: "1", ratio: 70}, {project_id: "2", ratio: 30}]}</code>
+                <strong>API 1: 登录鉴权</strong><br>
+                <code>POST /api/v1/auth/login</code> → 返回 <code>{access_token}</code>
                 <br><br>
-                <strong>API 2: 调用AI接口</strong><br>
+                <strong>API 2: 获取用户Key</strong><br>
+                <code>GET /api/v1/user/key?tool_type={tool_type}</code><br>
+                请求头：<code>Authorization: Bearer {access_token}</code><br>
+                返回：<code>{key_value: "xxx"}</code>
+                <br><br>
+                <strong>API 3: 调用AI</strong><br>
                 <code>POST /api/v1/chat</code><br>
-                请求头：<code>X-API-Key: {key_value}</code><br>
-                请求体：<code>{messages: [...], model: "glm-4"}</code>
-                <br><br>
-                <strong>数据存储</strong><br>
-                - 系统一记录Token使用到 <code>token_usage</code> 表<br>
-                - 系统二通过共享数据库查询 <code>token_usage</code> 表<br>
-                - 月末结算时，按挂靠比例计算至各项目
+                请求头：<code>X-API-Key: {key_value}</code>
             </div>
         </div>
     </div>
