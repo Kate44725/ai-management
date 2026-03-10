@@ -50,14 +50,17 @@
             position: relative;
             padding-top: 40px;
             padding-bottom: 40px;
+            padding-left: 80px;
+            padding-right: 80px;
         }
 
         .actor {
-            flex: 1;
+            width: 150px;
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
+            margin: 0 30px;
         }
 
         .actor-header {
@@ -171,28 +174,70 @@
             color: #10b981;
         }
 
-        /* 消息1: 用户登录 */
-        .msg1 { left: 20%; top: 100px; width: 20%; }
+        /* 消息位置 */
+        .msg-container {
+            position: absolute;
+            top: 80px;
+            left: 80px;
+            right: 80px;
+            height: 400px;
+        }
+
+        /* 消息1: SuperIDE -> AI算力管理系统 */
+        .msg1 {
+            position: absolute;
+            left: 150px;
+            top: 60px;
+            width: 180px;
+        }
         .msg1 .message-arrow { right: -6px; border-left-color: #3b82f6; }
 
-        /* 消息2: 返回Token */
-        .msg2 { left: 20%; top: 150px; width: 20%; background: #10b981; }
+        /* 消息2: AI算力管理系统 -> SuperIDE */
+        .msg2 {
+            position: absolute;
+            left: 150px;
+            top: 120px;
+            width: 180px;
+            background: #10b981;
+        }
         .msg2 .message-arrow { left: -6px; border-right-color: #10b981; }
 
-        /* 消息3: 获取Key */
-        .msg3 { left: 20%; top: 220px; width: 40%; }
+        /* 消息3: SuperIDE -> AI算力管理系统 */
+        .msg3 {
+            position: absolute;
+            left: 150px;
+            top: 200px;
+            width: 330px;
+        }
         .msg3 .message-arrow { right: -6px; border-left-color: #3b82f6; }
 
-        /* 消息4: 返回Key */
-        .msg4 { left: 20%; top: 270px; width: 40%; background: #10b981; }
+        /* 消息4: AI算力管理系统 -> SuperIDE */
+        .msg4 {
+            position: absolute;
+            left: 150px;
+            top: 260px;
+            width: 330px;
+            background: #10b981;
+        }
         .msg4 .message-arrow { left: -6px; border-right-color: #10b981; }
 
-        /* 消息5: 调用AI */
-        .msg5 { left: 20%; top: 340px; width: 60%; }
+        /* 消息5: SuperIDE -> NEW API */
+        .msg5 {
+            position: absolute;
+            left: 150px;
+            top: 340px;
+            width: 510px;
+        }
         .msg5 .message-arrow { right: -6px; border-left-color: #3b82f6; }
 
-        /* 消息6: 返回AI结果 */
-        .msg6 { left: 20%; top: 390px; width: 60%; background: #10b981; }
+        /* 消息6: NEW API -> SuperIDE */
+        .msg6 {
+            position: absolute;
+            left: 150px;
+            top: 400px;
+            width: 510px;
+            background: #10b981;
+        }
         .msg6 .message-arrow { left: -6px; border-right-color: #10b981; }
 
         .desc {
@@ -266,60 +311,62 @@
                 </div>
 
                 <!-- 消息线 -->
-                <!-- 1. 用户登录 -->
-                <div class="message msg1 request">
-                    <div class="message-arrow"></div>
-                    <div class="message-label">
-                        1. 用户登录/鉴权
-                        <span class="api">获取用户Token</span>
+                <div class="msg-container">
+                    <!-- 1. 用户登录 -->
+                    <div class="message msg1 request">
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            1. 用户登录/鉴权
+                            <span class="api">获取用户Token</span>
+                        </div>
                     </div>
-                </div>
 
-                <!-- 2. 返回Token -->
-                <div class="message msg2 response">
-                    <div class="message-arrow"></div>
-                    <div class="message-label">
-                        2. 返回鉴权Token
-                        <span class="api">{access_token}</span>
+                    <!-- 2. 返回Token -->
+                    <div class="message msg2 response">
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            2. 返回鉴权Token
+                            <span class="api">{access_token}</span>
+                        </div>
                     </div>
-                </div>
 
-                <!-- 3. 获取Key -->
-                <div class="message msg3 request">
-                    <div class="message-arrow"></div>
-                    <div class="message-label">
-                        3. 获取用户+工具Key
-                        <span class="api">GET /api/v1/user/key</span>
-                        <span class="api">Auth: Bearer {token}</span>
-                        <span class="api">tool_type: xxx</span>
+                    <!-- 3. 获取Key -->
+                    <div class="message msg3 request">
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            3. 获取用户+工具Key
+                            <span class="api">GET /api/v1/user/key</span>
+                            <span class="api">Auth: Bearer {token}</span>
+                            <span class="api">tool_type: xxx</span>
+                        </div>
                     </div>
-                </div>
 
-                <!-- 4. 返回Key -->
-                <div class="message msg4 response">
-                    <div class="message-arrow"></div>
-                    <div class="message-label">
-                        4. 返回用户+工具Key
-                        <span class="api">{key_value}</span>
+                    <!-- 4. 返回Key -->
+                    <div class="message msg4 response">
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            4. 返回用户+工具Key
+                            <span class="api">{key_value}</span>
+                        </div>
                     </div>
-                </div>
 
-                <!-- 5. 调用AI -->
-                <div class="message msg5 request">
-                    <div class="message-arrow"></div>
-                    <div class="message-label">
-                        5. 调用AI接口
-                        <span class="api">POST /api/v1/chat</span>
-                        <span class="api">X-API-Key: {key_value}</span>
+                    <!-- 5. 调用AI -->
+                    <div class="message msg5 request">
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            5. 调用AI接口
+                            <span class="api">POST /api/v1/chat</span>
+                            <span class="api">X-API-Key: {key_value}</span>
+                        </div>
                     </div>
-                </div>
 
-                <!-- 6. 返回AI结果 -->
-                <div class="message msg6 response">
-                    <div class="message-arrow"></div>
-                    <div class="message-label">
-                        6. 返回AI结果
-                        <span class="api">{response, token_count}</span>
+                    <!-- 6. 返回AI结果 -->
+                    <div class="message msg6 response">
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            6. 返回AI结果
+                            <span class="api">{response, token_count}</span>
+                        </div>
                     </div>
                 </div>
             </div>
