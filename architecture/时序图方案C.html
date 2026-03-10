@@ -65,12 +65,12 @@ sequenceDiagram
     A-->>S: 返回access_token
 
     Note over S,A: 2. 获取用户+工具Key
-    S->>A: GET /api/v1/user/key<br/>Authorization: Bearer {token}<br/>tool_type: xxx
+    S->>A: GET /api/v1/user/key
     A-->>S: 返回key_value
 
     Note over S,N: 3. 调用AI接口
-    S->>N: POST /api/v1/chat<br/>X-API-Key: {key_value}
-    N-->>S: 返回response, token_count
+    S->>N: POST /api/v1/chat
+    N-->>S: 返回结果
         </div>
 
         <div class="desc">
