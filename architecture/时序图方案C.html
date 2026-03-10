@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI算力管理系统 - 方案C时序图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 40px;
+            color: #1a1a2e;
+        }
+
+        h1 span {
+            color: #3b82f6;
+        }
+
+        .diagram {
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow-x: auto;
+        }
+
+        .sequence {
+            display: flex;
+            position: relative;
+            min-width: 900px;
+            padding: 20px 0;
+        }
+
+        .actor {
+            width: 200px;
+            text-align: center;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .actor-box {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            padding: 16px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .actor-box.sys3 {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .actor-box.sys2 {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .actor-box.sys1 {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+        }
+
+        .lifeline {
+            position: absolute;
+            top: 70px;
+            bottom: 40px;
+            width: 2px;
+            background: linear-gradient(180deg, #3b82f6, #e2e8f0);
+        }
+
+        .actor:nth-child(1) .lifeline { left: 100px; }
+        .actor:nth-child(2) .lifeline { left: 300px; }
+        .actor:nth-child(3) .lifeline { left: 500px; }
+
+        .messages {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .message {
+            display: flex;
+            align-items: center;
+            height: 60px;
+            position: relative;
+        }
+
+        .message-line {
+            position: absolute;
+            height: 2px;
+            background: #3b82f6;
+        }
+
+        .message:nth-child(odd) .message-line {
+            left: 100px;
+            right: 300px;
+        }
+
+        .message:nth-child(even) .message-line {
+            left: 300px;
+            right: 100px;
+            background: #10b981;
+        }
+
+        .message-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 6px solid transparent;
+        }
+
+        .message:nth-child(odd) .message-arrow {
+            right: 292px;
+            border-left-color: #3b82f6;
+        }
+
+        .message:nth-child(even) .message-arrow {
+            left: 292px;
+            border-right-color: #10b981;
+        }
+
+        .message-label {
+            position: absolute;
+            background: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #475569;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            z-index: 3;
+            white-space: nowrap;
+        }
+
+        .message:nth-child(odd) .message-label {
+            left: 20px;
+        }
+
+        .message:nth-child(even) .message-label {
+            right: 20px;
+        }
+
+        .message .api {
+            color: #3b82f6;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .message:nth-child(even) .api {
+            color: #10b981;
+        }
+
+        .note {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .note-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .note-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .note-dot.request { background: #3b82f6; }
+        .note-dot.response { background: #10b981; }
+        .note-dot.data { background: #6366f1; }
+
+        .desc {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .desc-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .desc-list {
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.8;
+        }
+
+        .desc-list code {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #7c3aed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>方案C时序图 <span>Token按项目比例结算</span></h1>
+
+        <div class="diagram">
+            <div class="sequence">
+                <div class="actor">
+                    <div class="actor-box sys3">SuperIDE/工具</div>
+                    <div class="lifeline"></div>
+                </div>
+                <div class="actor">
+                    <div class="actor-box sys2">AI算力管理系统</div>
+                    <div class="lifeline"></div>
+                </div>
+                <div class="actor">
+                    <div class="actor-box sys1">NEW API</div>
+                    <div class="lifeline"></div>
+                </div>
+
+                <div class="messages">
+                    <div class="message">
+                        <div class="message-line"></div>
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            1. 请求AI能力<br>
+                            <span class="api">用户ID + 工具类型</span>
+                        </div>
+                    </div>
+                    <div class="message">
+                        <div class="message-line"></div>
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            2. 获取用户Key<br>
+                            <span class="api">GET /api/v1/user/key?user_id=&tool_type=</span>
+                        </div>
+                    </div>
+                    <div class="message">
+                        <div class="message-line"></div>
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            3. 返回用户Key<br>
+                            <span class="api">{key_value, 挂靠项目列表}</span>
+                        </div>
+                    </div>
+                    <div class="message">
+                        <div class="message-line"></div>
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            4. 调用AI接口<br>
+                            <span class="api">POST /api/v1/chat</span>
+                        </div>
+                    </div>
+                    <div class="message">
+                        <div class="message-line"></div>
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            5. 返回AI结果<br>
+                            <span class="api">{response, token_count}</span>
+                        </div>
+                    </div>
+                    <div class="message">
+                        <div class="message-line"></div>
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            6. 记录Token使用<br>
+                            <span class="api">写入 token_usage 表</span>
+                        </div>
+                    </div>
+                    <div class="message">
+                        <div class="message-line"></div>
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            7. 返回结果给用户<br>
+                            <span class="api">{response}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note">
+                <div class="note-item">
+                    <div class="note-dot request"></div>
+                    <span>请求</span>
+                </div>
+                <div class="note-item">
+                    <div class="note-dot response"></div>
+                    <span>响应</span>
+                </div>
+                <div class="note-item">
+                    <div class="note-dot data"></div>
+                    <span>数据操作</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="desc">
+            <div class="desc-title">接口说明</div>
+            <div class="desc-list">
+                <strong>API 1: 获取用户Key</strong><br>
+                <code>GET /api/v1/user/key?user_id={user_id}&tool_type={tool_type}</code><br>
+                返回：<code>{key_value: "xxx", projects: [{project_id: "1", ratio: 70}, {project_id: "2", ratio: 30}]}</code>
+                <br><br>
+                <strong>API 2: 调用AI接口</strong><br>
+                <code>POST /api/v1/chat</code><br>
+                请求头：<code>X-API-Key: {key_value}</code><br>
+                请求体：<code>{messages: [...], model: "glm-4"}</code>
+                <br><br>
+                <strong>数据存储</strong><br>
+                - 系统一记录Token使用到 <code>token_usage</code> 表<br>
+                - 系统二通过共享数据库查询 <code>token_usage</code> 表<br>
+                - 月末结算时，按挂靠比例计算至各项目
+            </div>
+        </div>
+    </div>
+</body>
+</html>
