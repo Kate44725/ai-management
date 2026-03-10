@@ -3,299 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI算力管理系统 - 方案C时序图</title>
+    <title>方案C时序图</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: #f5f7fa;
-            color: #2c3e50;
             padding: 40px;
         }
-
         .container {
-            max-width: 1100px;
+            max-width: 900px;
             margin: 0 auto;
-        }
-
-        h1 {
-            font-size: 28px;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 30px;
-            color: #1a1a2e;
-        }
-
-        h1 span {
-            color: #3b82f6;
-        }
-
-        .diagram {
             background: #fff;
-            border-radius: 12px;
             padding: 30px;
+            border-radius: 12px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
         }
-
-        /* 头部 */
-        .header {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 10px;
-            padding: 0 60px;
-        }
-
-        .header-item {
-            width: 180px;
+        h1 {
             text-align: center;
+            color: #1a1a2e;
+            margin-bottom: 30px;
         }
-
-        .header-box {
-            padding: 10px 20px;
-            border-radius: 8px;
-            color: #fff;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .h1 { background: linear-gradient(135deg, #10b981, #059669); }
-        .h2 { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .h3 { background: linear-gradient(135deg, #6366f1, #4f46e5); }
-
-        /* 主体 */
-        .body {
-            position: relative;
-            padding: 0 40px;
-        }
-
-        /* 竖线 */
-        .lines {
-            display: flex;
-            justify-content: space-around;
-            padding: 0 80px;
-        }
-
-        .line {
-            width: 4px;
-            height: 450px;
-            border-radius: 2px;
-        }
-
-        .l1 { background: linear-gradient(180deg, #10b981, #e2e8f0); }
-        .l2 { background: linear-gradient(180deg, #f59e0b, #e2e8f0); }
-        .l3 { background: linear-gradient(180deg, #6366f1, #e2e8f0); }
-
-        /* 消息 */
-        .message-row {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 60px;
-            display: flex;
-            align-items: center;
-        }
-
-        .msg {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            height: 40px;
-            background: #fff;
-            border-radius: 6px;
-            padding: 6px 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border: 1px solid #e2e8f0;
-            font-size: 12px;
-        }
-
-        .msg-num {
-            font-weight: 600;
-            margin-right: 8px;
-            color: #3b82f6;
-        }
-
-        .msg-api {
-            color: #64748b;
-            font-family: monospace;
-            font-size: 11px;
-        }
-
-        /* 位置 */
-        .m1 { left: calc(50% - 280px); top: 30px; }
-        .m2 { left: calc(50% - 280px); top: 90px; }
-        .m3 { left: calc(50% - 200px); top: 170px; }
-        .m4 { left: calc(50% - 200px); top: 230px; }
-        .m5 { left: calc(50% - 120px); top: 310px; }
-        .m6 { left: calc(50% - 120px); top: 370px; }
-
-        /* 箭头 */
-        .arrow {
-            position: absolute;
-            width: 20px;
-            height: 2px;
-        }
-
-        .arrow-right { right: -20px; background: #3b82f6; }
-        .arrow-right::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: -4px;
-            border: 5px solid transparent;
-            border-left-color: #3b82f6;
-        }
-
-        .arrow-left { left: -20px; background: #10b981; }
-        .arrow-left::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: -4px;
-            border: 5px solid transparent;
-            border-right-color: #10b981;
-        }
-
         .desc {
             margin-top: 30px;
             padding: 20px;
             background: #f8fafc;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
+            border-radius: 8px;
         }
-
-        .desc-title {
-            font-size: 14px;
-            font-weight: 600;
+        .desc h3 {
             color: #1e293b;
+            font-size: 14px;
             margin-bottom: 12px;
         }
-
-        .desc-list {
-            font-size: 13px;
+        .desc p {
             color: #475569;
+            font-size: 13px;
             line-height: 1.8;
+            margin-bottom: 8px;
         }
-
-        .desc-list code {
+        code {
             background: #e2e8f0;
             padding: 2px 6px;
             border-radius: 4px;
             font-family: monospace;
             color: #7c3aed;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>方案C时序图 <span>Token按项目比例结算</span></h1>
+        <h1>方案C时序图 - Token按项目比例结算</h1>
+        <div class="mermaid">
+sequenceDiagram
+    participant S as SuperIDE/工具
+    participant A as AI算力管理系统
+    participant N as NEW API
 
-        <div class="diagram">
-            <!-- 头部 -->
-            <div class="header">
-                <div class="header-item">
-                    <div class="header-box h1">SuperIDE/工具</div>
-                </div>
-                <div class="header-item">
-                    <div class="header-box h2">AI算力管理系统</div>
-                </div>
-                <div class="header-item">
-                    <div class="header-box h3">NEW API</div>
-                </div>
-            </div>
+    Note over S,A: 1. 用户登录/鉴权
+    S->>A: 登录请求
+    A-->>S: 返回access_token
 
-            <!-- 主体 -->
-            <div class="body">
-                <!-- 竖线 -->
-                <div class="lines">
-                    <div class="line l1"></div>
-                    <div class="line l2"></div>
-                    <div class="line l3"></div>
-                </div>
+    Note over S,A: 2. 获取用户+工具Key
+    S->>A: GET /api/v1/user/key<br/>Authorization: Bearer {token}<br/>tool_type: xxx
+    A-->>S: 返回key_value
 
-                <!-- 消息 -->
-                <div class="message-row">
-                    <div class="msg m1">
-                        <span class="msg-num">1</span>
-                        <span>用户登录/鉴权 <code class="msg-api">获取用户Token</code></span>
-                        <div class="arrow arrow-right"></div>
-                    </div>
-                </div>
-
-                <div class="message-row">
-                    <div class="msg m2">
-                        <div class="arrow arrow-left"></div>
-                        <span class="msg-num">2</span>
-                        <span>返回鉴权Token <code class="msg-api">{access_token}</code></span>
-                    </div>
-                </div>
-
-                <div class="message-row">
-                    <div class="msg m3">
-                        <span class="msg-num">3</span>
-                        <span>获取用户+工具Key <code class="msg-api">GET /api/v1/user/key</code></span>
-                        <div class="arrow arrow-right"></div>
-                    </div>
-                </div>
-
-                <div class="message-row">
-                    <div class="msg m4">
-                        <div class="arrow arrow-left"></div>
-                        <span class="msg-num">4</span>
-                        <span>返回用户Key <code class="msg-api">{key_value}</code></span>
-                    </div>
-                </div>
-
-                <div class="message-row">
-                    <div class="msg m5">
-                        <span class="msg-num">5</span>
-                        <span>调用AI接口 <code class="msg-api">POST /api/v1/chat</code></span>
-                        <div class="arrow arrow-right"></div>
-                    </div>
-                </div>
-
-                <div class="message-row">
-                    <div class="msg m6">
-                        <div class="arrow arrow-left"></div>
-                        <span class="msg-num">6</span>
-                        <span>返回AI结果 <code class="msg-api">{response, token_count}</code></span>
-                    </div>
-                </div>
-            </div>
+    Note over S,N: 3. 调用AI接口
+    S->>N: POST /api/v1/chat<br/>X-API-Key: {key_value}
+    N-->>S: 返回response, token_count
         </div>
 
         <div class="desc">
-            <div class="desc-title">流程说明</div>
-            <div class="desc-list">
-                1. <strong>用户登录</strong>：SuperIDE用户向AI算力管理系统登录鉴权，获取用户Token<br>
-                2. <strong>返回鉴权Token</strong>：AI算力管理系统返回access_token<br>
-                3. <strong>获取Key</strong>：SuperIDE携带鉴权Token和工具类型，请求获取用户+工具的唯一Key<br>
-                4. <strong>返回Key</strong>：AI算力管理系统返回key_value<br>
-                5. <strong>调用AI</strong>：SuperIDE携带Key调用NEW API<br>
-                6. <strong>返回结果</strong>：NEW API返回AI结果和Token使用量
-            </div>
+            <h3>流程说明</h3>
+            <p>1. <strong>用户登录</strong>：SuperIDE用户向AI算力管理系统登录鉴权，获取用户Token</p>
+            <p>2. <strong>返回鉴权Token</strong>：AI算力管理系统返回access_token</p>
+            <p>3. <strong>获取Key</strong>：SuperIDE携带鉴权Token和工具类型，请求获取用户+工具的唯一Key</p>
+            <p>4. <strong>返回Key</strong>：AI算力管理系统返回key_value</p>
+            <p>5. <strong>调用AI</strong>：SuperIDE携带Key调用NEW API</p>
+            <p>6. <strong>返回结果</strong>：NEW API返回AI结果和Token使用量</p>
         </div>
 
         <div class="desc">
-            <div class="desc-title">接口说明</div>
-            <div class="desc-list">
-                <strong>API 1: 登录鉴权</strong><br>
-                <code>POST /api/v1/auth/login</code> → 返回 <code>{access_token}</code>
-                <br><br>
-                <strong>API 2: 获取用户Key</strong><br>
-                <code>GET /api/v1/user/key?tool_type={tool_type}</code><br>
-                请求头：<code>Authorization: Bearer {access_token}</code><br>
-                返回：<code>{key_value: "xxx"}</code>
-                <br><br>
-                <strong>API 3: 调用AI</strong><br>
-                <code>POST /api/v1/chat</code><br>
-                请求头：<code>X-API-Key: {key_value}</code>
-            </div>
+            <h3>接口说明</h3>
+            <p><strong>API 1: 登录鉴权</strong></p>
+            <p><code>POST /api/v1/auth/login</code> → 返回 <code>{access_token}</code></p>
+            <br>
+            <p><strong>API 2: 获取用户Key</strong></p>
+            <p><code>GET /api/v1/user/key?tool_type={tool_type}</code></p>
+            <p>请求头：<code>Authorization: Bearer {access_token}</code></p>
+            <p>返回：<code>{key_value: "xxx"}</code></p>
+            <br>
+            <p><strong>API 3: 调用AI</strong></p>
+            <p><code>POST /api/v1/chat</code></p>
+            <p>请求头：<code>X-API-Key: {key_value}</code></p>
         </div>
     </div>
+    <script>
+        mermaid.initialize({
+            theme: 'default',
+            sequenceDiagram: {
+                actorMargin: 50,
+                boxMargin: 10,
+                boxTextMargin: 5,
+                noteMargin: 10,
+                messageMargin: 40
+            }
+        });
+    </script>
 </body>
 </html>
