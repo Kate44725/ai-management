@@ -15,12 +15,11 @@
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: #f5f7fa;
             color: #2c3e50;
-            min-height: 100vh;
             padding: 40px;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
@@ -28,7 +27,7 @@
             font-size: 28px;
             font-weight: 600;
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             color: #1a1a2e;
         }
 
@@ -38,207 +37,128 @@
 
         .diagram {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 30px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            overflow-x: auto;
-            min-height: 700px;
         }
 
-        .sequence {
+        /* 头部 */
+        .header {
             display: flex;
-            position: relative;
-            padding-top: 40px;
-            padding-bottom: 40px;
-            padding-left: 80px;
-            padding-right: 80px;
+            justify-content: space-around;
+            margin-bottom: 10px;
+            padding: 0 60px;
         }
 
-        .actor {
-            width: 150px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            margin: 0 30px;
-        }
-
-        .actor-header {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            position: relative;
-            z-index: 2;
-            min-width: 140px;
+        .header-item {
+            width: 180px;
             text-align: center;
         }
 
-        .actor:nth-child(1) .actor-header { background: linear-gradient(135deg, #10b981, #059669); }
-        .actor:nth-child(2) .actor-header { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .actor:nth-child(3) .actor-header { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .header-box {
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+        }
 
-        .lifeline {
-            position: absolute;
-            top: 60px;
-            bottom: 20px;
+        .h1 { background: linear-gradient(135deg, #10b981, #059669); }
+        .h2 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .h3 { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+
+        /* 主体 */
+        .body {
+            position: relative;
+            padding: 0 40px;
+        }
+
+        /* 竖线 */
+        .lines {
+            display: flex;
+            justify-content: space-around;
+            padding: 0 80px;
+        }
+
+        .line {
             width: 4px;
-            background: linear-gradient(180deg, #3b82f6 0%, #e2e8f0 100%);
+            height: 450px;
             border-radius: 2px;
         }
 
-        .actor:nth-child(1) .lifeline { background: linear-gradient(180deg, #10b981 0%, #e2e8f0 100%); }
-        .actor:nth-child(2) .lifeline { background: linear-gradient(180deg, #f59e0b 0%, #e2e8f0 100%); }
-        .actor:nth-child(3) .lifeline { background: linear-gradient(180deg, #6366f1 0%, #e2e8f0 100%); }
+        .l1 { background: linear-gradient(180deg, #10b981, #e2e8f0); }
+        .l2 { background: linear-gradient(180deg, #f59e0b, #e2e8f0); }
+        .l3 { background: linear-gradient(180deg, #6366f1, #e2e8f0); }
 
-        .activations {
+        /* 消息 */
+        .message-row {
             position: absolute;
-            top: 60px;
-            bottom: 20px;
-            width: 100%;
-        }
-
-        .activation {
-            position: absolute;
-            width: 60px;
-            background: linear-gradient(180deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
-            border-left: 2px solid #10b981;
-            border-right: 2px solid #10b981;
-        }
-
-        .actor:nth-child(2) .activation {
-            background: linear-gradient(180deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
-            border-color: #f59e0b;
-        }
-
-        .actor:nth-child(3) .activation {
-            background: linear-gradient(180deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
-            border-color: #6366f1;
-        }
-
-        .message {
-            position: absolute;
-            height: 2px;
-            background: #3b82f6;
+            left: 0;
+            right: 0;
+            height: 60px;
             display: flex;
             align-items: center;
         }
 
-        .message.request {
-            background: #3b82f6;
-        }
-
-        .message.response {
-            background: #10b981;
-        }
-
-        .message-arrow {
+        .msg {
             position: absolute;
-            width: 0;
-            height: 0;
-            border: 6px solid transparent;
-        }
-
-        .message-label {
-            position: absolute;
+            display: flex;
+            align-items: center;
+            height: 40px;
             background: #fff;
-            padding: 8px 12px;
             border-radius: 6px;
-            font-size: 12px;
-            color: #475569;
+            padding: 6px 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            white-space: nowrap;
             border: 1px solid #e2e8f0;
-            top: -30px;
+            font-size: 12px;
         }
 
-        .message.request .message-label {
-            left: 0;
-        }
-
-        .message.response .message-label {
-            right: 0;
-        }
-
-        .message .api {
+        .msg-num {
+            font-weight: 600;
+            margin-right: 8px;
             color: #3b82f6;
+        }
+
+        .msg-api {
+            color: #64748b;
             font-family: monospace;
             font-size: 11px;
-            display: block;
-            margin-top: 2px;
         }
 
-        .message.response .api {
-            color: #10b981;
-        }
+        /* 位置 */
+        .m1 { left: calc(50% - 280px); top: 30px; }
+        .m2 { left: calc(50% - 280px); top: 90px; }
+        .m3 { left: calc(50% - 200px); top: 170px; }
+        .m4 { left: calc(50% - 200px); top: 230px; }
+        .m5 { left: calc(50% - 120px); top: 310px; }
+        .m6 { left: calc(50% - 120px); top: 370px; }
 
-        /* 消息位置 */
-        .msg-container {
+        /* 箭头 */
+        .arrow {
             position: absolute;
-            top: 80px;
-            left: 80px;
-            right: 80px;
-            height: 400px;
+            width: 20px;
+            height: 2px;
         }
 
-        /* 消息1: SuperIDE -> AI算力管理系统 */
-        .msg1 {
+        .arrow-right { right: -20px; background: #3b82f6; }
+        .arrow-right::after {
+            content: '';
             position: absolute;
-            left: 150px;
-            top: 60px;
-            width: 180px;
+            right: 0;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #3b82f6;
         }
-        .msg1 .message-arrow { right: -6px; border-left-color: #3b82f6; }
 
-        /* 消息2: AI算力管理系统 -> SuperIDE */
-        .msg2 {
+        .arrow-left { left: -20px; background: #10b981; }
+        .arrow-left::after {
+            content: '';
             position: absolute;
-            left: 150px;
-            top: 120px;
-            width: 180px;
-            background: #10b981;
+            left: 0;
+            top: -4px;
+            border: 5px solid transparent;
+            border-right-color: #10b981;
         }
-        .msg2 .message-arrow { left: -6px; border-right-color: #10b981; }
-
-        /* 消息3: SuperIDE -> AI算力管理系统 */
-        .msg3 {
-            position: absolute;
-            left: 150px;
-            top: 200px;
-            width: 330px;
-        }
-        .msg3 .message-arrow { right: -6px; border-left-color: #3b82f6; }
-
-        /* 消息4: AI算力管理系统 -> SuperIDE */
-        .msg4 {
-            position: absolute;
-            left: 150px;
-            top: 260px;
-            width: 330px;
-            background: #10b981;
-        }
-        .msg4 .message-arrow { left: -6px; border-right-color: #10b981; }
-
-        /* 消息5: SuperIDE -> NEW API */
-        .msg5 {
-            position: absolute;
-            left: 150px;
-            top: 340px;
-            width: 510px;
-        }
-        .msg5 .message-arrow { right: -6px; border-left-color: #3b82f6; }
-
-        /* 消息6: NEW API -> SuperIDE */
-        .msg6 {
-            position: absolute;
-            left: 150px;
-            top: 400px;
-            width: 510px;
-            background: #10b981;
-        }
-        .msg6 .message-arrow { left: -6px; border-right-color: #10b981; }
 
         .desc {
             margin-top: 30px;
@@ -268,16 +188,6 @@
             font-family: monospace;
             color: #7c3aed;
         }
-
-        .optional-tag {
-            display: inline-block;
-            background: #fef3c7;
-            color: #92400e;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
-        }
     </style>
 </head>
 <body>
@@ -285,88 +195,74 @@
         <h1>方案C时序图 <span>Token按项目比例结算</span></h1>
 
         <div class="diagram">
-            <div class="sequence">
-                <!-- 参与者头部 -->
-                <div class="actor">
-                    <div class="actor-header">SuperIDE/工具</div>
-                    <div class="lifeline"></div>
-                    <div class="activations">
-                        <div class="activation" style="top: 40px; height: 380px;"></div>
-                    </div>
+            <!-- 头部 -->
+            <div class="header">
+                <div class="header-item">
+                    <div class="header-box h1">SuperIDE/工具</div>
                 </div>
-                <div class="actor">
-                    <div class="actor-header">AI算力管理系统</div>
-                    <div class="lifeline"></div>
-                    <div class="activations">
-                        <div class="activation" style="top: 40px; height: 80px;"></div>
-                        <div class="activation" style="top: 160px; height: 140px;"></div>
-                    </div>
+                <div class="header-item">
+                    <div class="header-box h2">AI算力管理系统</div>
                 </div>
-                <div class="actor">
-                    <div class="actor-header">NEW API</div>
-                    <div class="lifeline"></div>
-                    <div class="activations">
-                        <div class="activation" style="top: 300px; height: 120px;"></div>
-                    </div>
+                <div class="header-item">
+                    <div class="header-box h3">NEW API</div>
+                </div>
+            </div>
+
+            <!-- 主体 -->
+            <div class="body">
+                <!-- 竖线 -->
+                <div class="lines">
+                    <div class="line l1"></div>
+                    <div class="line l2"></div>
+                    <div class="line l3"></div>
                 </div>
 
-                <!-- 消息线 -->
-                <div class="msg-container">
-                    <!-- 1. 用户登录 -->
-                    <div class="message msg1 request">
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            1. 用户登录/鉴权
-                            <span class="api">获取用户Token</span>
-                        </div>
+                <!-- 消息 -->
+                <div class="message-row">
+                    <div class="msg m1">
+                        <span class="msg-num">1</span>
+                        <span>用户登录/鉴权 <code class="msg-api">获取用户Token</code></span>
+                        <div class="arrow arrow-right"></div>
                     </div>
+                </div>
 
-                    <!-- 2. 返回Token -->
-                    <div class="message msg2 response">
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            2. 返回鉴权Token
-                            <span class="api">{access_token}</span>
-                        </div>
+                <div class="message-row">
+                    <div class="msg m2">
+                        <div class="arrow arrow-left"></div>
+                        <span class="msg-num">2</span>
+                        <span>返回鉴权Token <code class="msg-api">{access_token}</code></span>
                     </div>
+                </div>
 
-                    <!-- 3. 获取Key -->
-                    <div class="message msg3 request">
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            3. 获取用户+工具Key
-                            <span class="api">GET /api/v1/user/key</span>
-                            <span class="api">Auth: Bearer {token}</span>
-                            <span class="api">tool_type: xxx</span>
-                        </div>
+                <div class="message-row">
+                    <div class="msg m3">
+                        <span class="msg-num">3</span>
+                        <span>获取用户+工具Key <code class="msg-api">GET /api/v1/user/key</code></span>
+                        <div class="arrow arrow-right"></div>
                     </div>
+                </div>
 
-                    <!-- 4. 返回Key -->
-                    <div class="message msg4 response">
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            4. 返回用户+工具Key
-                            <span class="api">{key_value}</span>
-                        </div>
+                <div class="message-row">
+                    <div class="msg m4">
+                        <div class="arrow arrow-left"></div>
+                        <span class="msg-num">4</span>
+                        <span>返回用户Key <code class="msg-api">{key_value}</code></span>
                     </div>
+                </div>
 
-                    <!-- 5. 调用AI -->
-                    <div class="message msg5 request">
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            5. 调用AI接口
-                            <span class="api">POST /api/v1/chat</span>
-                            <span class="api">X-API-Key: {key_value}</span>
-                        </div>
+                <div class="message-row">
+                    <div class="msg m5">
+                        <span class="msg-num">5</span>
+                        <span>调用AI接口 <code class="msg-api">POST /api/v1/chat</code></span>
+                        <div class="arrow arrow-right"></div>
                     </div>
+                </div>
 
-                    <!-- 6. 返回AI结果 -->
-                    <div class="message msg6 response">
-                        <div class="message-arrow"></div>
-                        <div class="message-label">
-                            6. 返回AI结果
-                            <span class="api">{response, token_count}</span>
-                        </div>
+                <div class="message-row">
+                    <div class="msg m6">
+                        <div class="arrow arrow-left"></div>
+                        <span class="msg-num">6</span>
+                        <span>返回AI结果 <code class="msg-api">{response, token_count}</code></span>
                     </div>
                 </div>
             </div>
@@ -384,7 +280,7 @@
             </div>
         </div>
 
-        <div class="desc" style="margin-top: 20px;">
+        <div class="desc">
             <div class="desc-title">接口说明</div>
             <div class="desc-list">
                 <strong>API 1: 登录鉴权</strong><br>
