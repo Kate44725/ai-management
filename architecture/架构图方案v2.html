@@ -601,7 +601,7 @@
                 <div class="scheme-title">方案C：Token按项目均分结算</div>
                 <span class="recommend-tag">推荐</span>
             </div>
-            <div class="scheme-desc">用户不限制额度，按实际使用结算。挂靠多个项目时费用均分，项目经理可禁用/启用用户挂靠</div>
+            <div class="scheme-desc">用户不限制额度，一个用户一个工具一个Key。挂靠多个项目时费用均分，项目经理可禁用/启用用户挂靠</div>
 
             <div class="arch-diagram">
                 <!-- 第一行：系统 -->
@@ -615,7 +615,7 @@
                         </div>
                         <div class="component">
                             <strong>Key管理</strong>
-                            根据用户获取唯一Key
+                            一个用户一个工具一个Key
                         </div>
                         <div class="component security">
                             <strong>🔒 前端不接触Key</strong>
@@ -696,8 +696,8 @@
 
             <div class="feature-list">
                 <div class="feature-item">用户无额度限制</div>
+                <div class="feature-item">一个用户一个工具一个Key</div>
                 <div class="feature-item">用户无感知（无需选择项目）</div>
-                <div class="feature-item">系统根据用户获取唯一Key</div>
                 <div class="feature-item">挂靠多项目费用均分</div>
                 <div class="feature-item">项目经理可禁用/启用用户挂靠</div>
             </div>
@@ -719,6 +719,12 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #e2e8f0;"><strong>Key粒度</strong></td>
+                        <td style="padding: 12px; border: 1px solid #e2e8f0;">用户+项目+工具</td>
+                        <td style="padding: 12px; border: 1px solid #e2e8f0;">用户+项目+工具</td>
+                        <td style="padding: 12px; border: 1px solid #e2e8f0;">用户+工具</td>
+                    </tr>
                     <tr>
                         <td style="padding: 12px; border: 1px solid #e2e8f0;"><strong>额度限制</strong></td>
                         <td style="padding: 12px; border: 1px solid #e2e8f0;">有额度限制</td>
