@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>方案C时序图</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@9.4.3/dist/mermaid.min.js"></script>
     <style>
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -53,7 +53,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>方案C时序图 - Token按项目比例结算</h1>
+        <h1>时序图 - 各系统间请求调用关系</h1>
         <div class="mermaid">
 sequenceDiagram
     participant S as SuperIDE/工具
@@ -99,15 +99,11 @@ sequenceDiagram
         </div>
     </div>
     <script>
-        mermaid.initialize({
-            theme: 'default',
-            sequenceDiagram: {
-                actorMargin: 50,
-                boxMargin: 10,
-                boxTextMargin: 5,
-                noteMargin: 10,
-                messageMargin: 40
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            mermaid.initialize({
+                theme: 'default',
+                startOnLoad: true
+            });
         });
     </script>
 </body>
