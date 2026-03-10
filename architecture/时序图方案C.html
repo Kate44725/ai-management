@@ -252,7 +252,15 @@
                         <div class="message-line"></div>
                         <div class="message-arrow"></div>
                         <div class="message-label">
-                            1. 请求AI能力<br>
+                            1. 用户登录/鉴权<br>
+                            <span class="api">获取用户Token</span>
+                        </div>
+                    </div>
+                    <div class="message">
+                        <div class="message-line"></div>
+                        <div class="message-arrow"></div>
+                        <div class="message-label">
+                            2. 请求AI能力<br>
                             <span class="api">用户ID + 工具类型</span>
                         </div>
                     </div>
@@ -260,7 +268,7 @@
                         <div class="message-line"></div>
                         <div class="message-arrow"></div>
                         <div class="message-label">
-                            2. 获取用户Key<br>
+                            3. 获取用户Key<br>
                             <span class="api">GET /api/v1/user/key?user_id=&tool_type=</span>
                         </div>
                     </div>
@@ -268,7 +276,7 @@
                         <div class="message-line"></div>
                         <div class="message-arrow"></div>
                         <div class="message-label">
-                            3. 返回用户Key<br>
+                            4. 返回用户Key<br>
                             <span class="api">{key_value, 挂靠项目列表}</span>
                         </div>
                     </div>
@@ -276,7 +284,7 @@
                         <div class="message-line"></div>
                         <div class="message-arrow"></div>
                         <div class="message-label">
-                            4. 调用AI接口<br>
+                            5. 调用AI接口<br>
                             <span class="api">POST /api/v1/chat</span>
                         </div>
                     </div>
@@ -284,7 +292,7 @@
                         <div class="message-line"></div>
                         <div class="message-arrow"></div>
                         <div class="message-label">
-                            5. 返回AI结果<br>
+                            6. 返回AI结果<br>
                             <span class="api">{response, token_count}</span>
                         </div>
                     </div>
@@ -292,7 +300,7 @@
                         <div class="message-line"></div>
                         <div class="message-arrow"></div>
                         <div class="message-label">
-                            6. 记录Token使用<br>
+                            7. 记录Token使用<br>
                             <span class="api">写入 token_usage 表</span>
                         </div>
                     </div>
@@ -300,7 +308,7 @@
                         <div class="message-line"></div>
                         <div class="message-arrow"></div>
                         <div class="message-label">
-                            7. 返回结果给用户<br>
+                            8. 返回结果给用户<br>
                             <span class="api">{response}</span>
                         </div>
                     </div>
