@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI算力分摊系统设计方案</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-lighter: #dbeafe;
+            --accent: #f97316;
+            --accent-light: #fed7aa;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --purple: #8b5cf6;
+            --purple-light: #ede9fe;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        * {
+            font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+        }
+
+        /* 16:9 PPT 幻灯片容器 */
+        .slide-container {
+            width: 100vw;
+            height: 56.25vw; /* 16:9 比例 */
+            max-height: 100vh;
+            max-width: 177.78vh; /* 16:9 比例 */
+            margin: 0 auto;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f5f3ff 100%);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        @media (min-aspect-ratio: 16/9) {
+            .slide-container {
+                width: 177.78vh;
+                height: 100vh;
+            }
+        }
+
+        /* 背景装饰 */
+        .bg-decoration {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+        }
+
+        .bg-decoration.blue {
+            background: #3b82f6;
+            width: 400px;
+            height: 400px;
+            top: -100px;
+            right: -100px;
+        }
+
+        .bg-decoration.purple {
+            background: #8b5cf6;
+            width: 300px;
+            height: 300px;
+            bottom: -50px;
+            left: -50px;
+        }
+
+        .bg-decoration.orange {
+            background: #f97316;
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.15;
+        }
+
+        /* 标题区 */
+        .header {
+            position: absolute;
+            top: 40px;
+            left: 60px;
+            right: 60px;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .header-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        /* 主内容区 */
+        .content {
+            position: absolute;
+            top: 140px;
+            left: 60px;
+            right: 60px;
+            bottom: 60px;
+            display: flex;
+            gap: 40px;
+        }
+
+        .left-panel {
+            flex: 1.1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .right-panel {
+            flex: 0.9;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 28px;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 3px solid var(--primary-lighter);
+        }
+
+        .section-title .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .section-title .icon.blue { background: var(--primary-lighter); }
+        .section-title .icon.purple { background: var(--purple-light); }
+        .section-title .icon.orange { background: var(--accent-light); }
+
+        /* 用户旅途流程 */
+        .journey-flow {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            padding: 16px 0;
+            flex: 1;
+        }
+
+        .journey-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            padding: 0 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .journey-step::after {
+            content: '';
+            position: absolute;
+            top: 32px;
+            right: -8px;
+            width: 16px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-light), #60a5fa);
+            border-radius: 2px;
+        }
+
+        .journey-step:last-child::after { display: none; }
+
+        .step-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+            font-size: 28px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            flex-shrink: 0;
+        }
+
+        .step-icon.admin { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+        .step-icon.manager { background: linear-gradient(135deg, #f97316, #fb923c); }
+        .step-icon.user { background: linear-gradient(135deg, #10b981, #34d399); }
+        .step-icon.usage { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+
+        .step-label {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .step-role {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            background: var(--bg);
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .step-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* 条件分支 */
+        .condition-box {
+            background: linear-gradient(135deg, #fef3c7, #fef9c3);
+            border: 1px solid #fde047;
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .condition-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #92400e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .condition-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .condition-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            color: var(--text);
+            border-left: 4px solid #f59e0b;
+        }
+
+        .condition-item.alert {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        /* 架构图 */
+        .arch-diagram {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 16px;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .arch-layer {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .arch-label {
+            width: 80px;
+            text-align: right;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .arch-node {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .arch-node.client { border-color: #3b82f6; background: #eff6ff; }
+        .arch-node.gateway { border-color: #8b5cf6; background: #f5f3ff; }
+        .arch-node.api { border-color: #10b981; background: #ecfdf5; }
+        .arch-node.key { border-color: #f97316; background: #fff7ed; }
+
+        .arch-arrow {
+            text-align: center;
+            padding: 4px 0;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        /* 流程说明 */
+        .flow-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            flex: 1;
+        }
+
+        .flow-card-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .flow-step-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary-lighter);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.72rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* 底部页码 */
+        .page-number {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.8);
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+
+        /* 动画 */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in { animation: fadeInUp 0.6s ease forwards; }
+        .delay-1 { animation-delay: 0.15s; opacity: 0; }
+        .delay-2 { animation-delay: 0.3s; opacity: 0; }
+        .delay-3 { animation-delay: 0.45s; opacity: 0; }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- 背景装饰 -->
+        <div class="bg-decoration blue"></div>
+        <div class="bg-decoration purple"></div>
+        <div class="bg-decoration orange"></div>
+
+        <!-- 标题 -->
+        <div class="header animate-in">
+            <h1 class="header-title">AI算力分摊系统设计方案</h1>
+            <p class="header-subtitle">用户旅途与系统架构设计</p>
+        </div>
+
+        <!-- 主内容 -->
+        <div class="content">
+            <!-- 左侧 -->
+            <div class="left-panel">
+                <!-- 用户旅途 -->
+                <div class="card animate-in delay-1">
+                    <div class="section-title">
+                        <span class="icon blue">👥</span>
+                        用户旅途
+                    </div>
+
+                    <div class="journey-flow">
+                        <div class="journey-step">
+                            <div class="step-icon admin">⚙️</div>
+                            <div class="step-label">管理员</div>
+                            <span class="step-role">角色</span>
+                            <p class="step-desc">添加项目和项目经理</p>
+                        </div>
+                        <div class="journey-step">
+                            <div class="step-icon manager">👨‍💼</div>
+                            <div class="step-label">项目经理</div>
+                            <span class="step-role">角色</span>
+                            <p class="step-desc">添加群组<br>分配/禁用额度</p>
+                        </div>
+                        <div class="journey-step">
+                            <div class="step-icon user">👤</div>
+                            <div class="step-label">终端用户</div>
+                            <span class="step-role">角色</span>
+                            <p class="step-desc">使用AI工具<br>消耗算力额度</p>
+                        </div>
+                        <div class="journey-step">
+                            <div class="step-icon usage">📊</div>
+                            <div class="step-label">运营看板</div>
+                            <span class="step-role">角色</span>
+                            <p class="step-desc">查看费用账单<br>月度数据</p>
+                        </div>
+                    </div>
+
+                    <!-- 条件分支 -->
+                    <div class="condition-box">
+                        <div class="condition-title">
+                            <span>🔄</span> 项目选择逻辑
+                        </div>
+                        <div class="condition-list">
+                            <div class="condition-item">
+                                <strong>多项目：</strong>每次需选择项目
+                            </div>
+                            <div class="condition-item">
+                                <strong>单项目：</strong>自动使用，无需选择
+                            </div>
+                            <div class="condition-item alert">
+                                <strong>无权限：</strong>提示无算力权限
+                            </div>
+                            <div class="condition-item alert">
+                                <strong>额度尽：</strong>提示联系扩容
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧 -->
+            <div class="right-panel">
+                <!-- 系统设计 -->
+                <div class="card animate-in delay-2" style="flex: 1;">
+                    <div class="section-title">
+                        <span class="icon purple">🏗️</span>
+                        系统设计
+                    </div>
+
+                    <div class="arch-diagram">
+                        <div class="arch-layer">
+                            <div class="arch-label">AI工具</div>
+                            <div class="arch-node client">🤖 发起请求</div>
+                        </div>
+                        <div class="arch-arrow">⬇️ userId + projectId + toolId</div>
+                        <div class="arch-layer">
+                            <div class="arch-label">Gateway</div>
+                            <div class="arch-node gateway">🔐 鉴权服务</div>
+                        </div>
+                        <div class="arch-arrow">⬇️ 生成Key</div>
+                        <div class="arch-layer">
+                            <div class="arch-label">分摊后台</div>
+                            <div class="arch-node key">🔑 唯一Key</div>
+                        </div>
+                        <div class="arch-arrow">⬇️ 自动携带Key</div>
+                        <div class="arch-layer">
+                            <div class="arch-label">NEW API</div>
+                            <div class="arch-node api">🚀 AI服务响应</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 流程说明 -->
+                <div class="flow-card animate-in delay-3">
+                    <div class="flow-card-title">
+                        <span>📝</span> 核心优势
+                    </div>
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <span class="flow-step-num">✓</span>
+                            <span>用户无感知，Key自动携带</span>
+                        </div>
+                        <div class="flow-step">
+                            <span class="flow-step-num">✓</span>
+                            <span>精确追踪项目算力消耗</span>
+                        </div>
+                        <div class="flow-step">
+                            <span class="flow-step-num">✓</span>
+                            <span>统一鉴权与额度控制</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页码 -->
+        <div class="page-number">1 / 1</div>
+    </div>
+</body>
+</html>
